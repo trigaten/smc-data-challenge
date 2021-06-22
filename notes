@@ -1,2 +1,2 @@
 https://pytorch.org/tutorials/beginner/basics/data_tutorial.html
-To include slicing in Dataset obj
+To include slicing in Dataset obj -- working on this but might not be needed
