@@ -17,14 +17,21 @@ import numpy as np
 # for creating a Pytorch Dataset object
 from torch.utils.data import Dataset
 
+# import the custom Dataset object
 import SMCCarsDataset
 
 rootdir = 'SMC21_GM_AV'
 
+# instantiate an instance of the Dataset object
 SMCCars = SMCCarsDataset.SMCCarsDataset(rootdir)
 
+# print len of dataset-- how many samples
+print(len(SMCCars))
+
+# get the first data sample
 sample = SMCCars[0]
 
+# extract the image and its segmentation
 image = (sample['image'])
 segmentation = (sample['segmentation'])
 
