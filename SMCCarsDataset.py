@@ -37,7 +37,7 @@ class SMCCarsDataset(Dataset):
         self.transform = transform
 
     def __len__(self):
-        return len(self.cars_frame)
+        return len(self.image_list)
 
     def __getitem__(self, idx):
         """ The indexing method for this object. If you have an instance of this object you can 
