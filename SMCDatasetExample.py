@@ -34,6 +34,10 @@ sample = SMCCars[0]
 # extract the image and its segmentation
 image = (sample['image'])
 segmentation = (sample['segmentation'])
+
+print(image.shape)
+print(segmentation.shape)
+
 image = image.permute(1, 2, 0)
 segmentation = segmentation.permute(1, 2, 0)
 # show the image with its segmentation 

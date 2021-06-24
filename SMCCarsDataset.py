@@ -51,6 +51,10 @@ class SMCCarsDataset(Dataset):
         image = read_image(self.image_list[idx])
         segmentation = read_image(self.seg_list[idx])
 
+        # remove the alpha channels
+        image = torch.split(image, len(image)-1, 0)[0]
+        segmentation = torch.split(segmentation, len(segmentation)-1, 0)[0]
+
         sample = {'image': image, 'segmentation': segmentation}
 
         if self.transform:
