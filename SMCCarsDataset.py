@@ -19,7 +19,7 @@ import os
 from torch.utils.data import Dataset
 
 # for returning images in the indexer
-from skimage import io
+from torchvision.io import read_image
 
 class SMCCarsDataset(Dataset):
     def __init__(self, root_dir, transform=None):
@@ -48,8 +48,8 @@ class SMCCarsDataset(Dataset):
             idx = idx.tolist()
 
         # convert path to image/seg to image/seg itself
-        image = torch.tensor(io.imread(self.image_list[idx]))
-        segmentation = torch.tensor(io.imread(self.seg_list[idx]))
+        image = read_image(self.image_list[idx])
+        segmentation = read_image(self.seg_list[idx])
 
         sample = {'image': image, 'segmentation': segmentation}
 
