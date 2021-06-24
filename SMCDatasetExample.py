@@ -34,7 +34,8 @@ sample = SMCCars[0]
 # extract the image and its segmentation
 image = (sample['image'])
 segmentation = (sample['segmentation'])
-
+image = image.permute(1, 2, 0)
+segmentation = segmentation.permute(1, 2, 0)
 # show the image with its segmentation 
 fig = plt.figure()
 
