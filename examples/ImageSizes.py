@@ -1,6 +1,8 @@
 """
-A code example that implements the SMCCardsDataset object, indexes it for 
-a sample, and displays the sample with its segmentation map.
+A script which counts the number of images of each size in the dataset:
+NOTE: likely to produce INCORRECT results when dataset images 
+are stretched to be the same size
+{torch.Size([3, 720, 1280]): 4898, torch.Size([3, 1024, 2048]): 700}
 """
 
 __author__ = "Sander Schulhoff"
@@ -28,26 +30,17 @@ rootdir = '../SMC21_GM_AV'
 
 # instantiate an instance of the Dataset object
 SMCCars = SMCCarsDataset.SMCCarsDataset(rootdir)
-sample = SMCCars[2480]
-shapes = set(())
 
-index = 3631
-while True:
-    try:
-        sample = SMCCars[index]
-    except Exception as e:
-        print(e)
+shapes = {}
+
+for index, sample in enumerate(SMCCars):
     image = sample['image']
     dims = image.shape
-    print(index)
-    print(dims)
-    index+=1
-
-# for index, sample in enumerate(SMCCars[2400,:]):
-#     image = sample['image']
-#     dims = image.shape
-#     shapes.add(dims)
-#     if index % 100 == 0:
-#         print(str(index) + ": " + str(shapes))
+    if dims in shapes:
+        shapes[dims]+=1
+    else:
+        shapes[dims] = 1
+    if index % 100 == 0:
+        print(str(index) + ": " + str(shapes))
         
-# print(shapes)
+print(shapes)
