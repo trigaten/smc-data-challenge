@@ -19,7 +19,7 @@ import os
 from torch.utils.data import Dataset
 
 # for returning images in the indexer
-from skimage import io
+from torchvision.io import read_image
 
 class SMCCarsDataset(Dataset):
     def __init__(self, root_dir, transform=None):
@@ -48,9 +48,21 @@ class SMCCarsDataset(Dataset):
             idx = idx.tolist()
 
         # convert path to image/seg to image/seg itself
-        image = torch.tensor(io.imread(self.image_list[idx]))
-        segmentation = torch.tensor(io.imread(self.seg_list[idx]))
+        img_path = self.image_list[idx]
+        # check that image is not corrupt
+        try:
+            image = read_image(self.image_list[idx])
+        except Exception as e:
+            raise Exception("Unable to read image at " + img_path + ". Verify that it is not corrupted")
+        segmentation = read_image(self.seg_list[idx])
 
+        # remove the alpha channels
+        # test if alpha channel exists-- not all pngs have alpha channel
+        if (image.shape[0] == 4):
+            image = torch.split(image, len(image)-1, 0)[0]
+        if (segmentation.shape[0] == 4):
+            segmentation = torch.split(segmentation, len(segmentation)-1, 0)[0]
+        
         sample = {'image': image, 'segmentation': segmentation}
 
         if self.transform:
@@ -70,6 +82,9 @@ class SMCCarsDataset(Dataset):
             images_path = os.path.join(image_type_path, "images")
             # append all image paths to the list
             for image_file in os.listdir(images_path):
+                # check for hidden .DS_STORE filess
+                if image_file.find(".DS_Store") != -1:
+                    continue
                 images.append(os.path.join(images_path, image_file))
 
             # the path for the segmentations
@@ -79,3 +94,9 @@ class SMCCarsDataset(Dataset):
                 segmentations.append(os.path.join(segmentations_path, segmentation_file))
 
         return (images, segmentations)
+
+if __name__ == '__main__':
+    rootdir = 'SMC21_GM_AV'
+    # instantiate an instance of the Dataset object
+    SMCCars = SMCCarsDataset(rootdir)
+    sample = SMCCars[2193]

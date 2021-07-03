@@ -10,24 +10,40 @@ import torch
 import torchvision
 import torchvision.transforms as transforms
 
-# for visualization
+# for visualizatio
 import matplotlib.pyplot as plt
 import numpy as np
 
 # for creating a Pytorch Dataset object
 from torch.utils.data import Dataset
 
+# to make import from one dir up possible
+import sys
+sys.path.append("..") 
+
+# import the custom Dataset object
 import SMCCarsDataset
 
-rootdir = 'SMC21_GM_AV'
+rootdir = '../SMC21_GM_AV'
 
+# instantiate an instance of the Dataset object
 SMCCars = SMCCarsDataset.SMCCarsDataset(rootdir)
 
+# print len of dataset-- how many samples
+print(len(SMCCars))
+
+# get the first data sample
 sample = SMCCars[0]
 
+# extract the image and its segmentation
 image = (sample['image'])
 segmentation = (sample['segmentation'])
 
+print(image.shape)
+print(segmentation.shape)
+
+image = image.permute(1, 2, 0)
+segmentation = segmentation.permute(1, 2, 0)
 # show the image with its segmentation 
 fig = plt.figure()
 
