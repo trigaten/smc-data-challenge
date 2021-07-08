@@ -11,6 +11,7 @@ __email__ = "sanderschulhoff@gmail.com"
 import torch
 import torchvision
 import torchvision.transforms as transforms
+import torchvision.transforms.functional as TF
 
 # for going through the folders
 import os
@@ -63,12 +64,25 @@ class SMCCarsDataset(Dataset):
         if (segmentation.shape[0] == 4):
             segmentation = torch.split(segmentation, len(segmentation)-1, 0)[0]
         
+        image, segmentation = resize(image, segmentation)
+
         sample = {'image': image, 'segmentation': segmentation}
 
         if self.transform:
             sample = self.transform(sample)
 
         return sample
+
+    def resize(self, image, segmentation):
+        if (image.channel[1] == 1024):
+            i, j, h, w = transforms.RandomCrop.get_params(image, output_size=(1024, 1820))
+            image = TF.crop(image, i, j, h, w)
+            segmentation = TF.crop(segmentation, i, j, h, w)
+            resize = transforms.Resize(1280, 720)
+            image = resize(image)
+            segmentation = resize(segmentation)
+
+        return (image, segmentation)
 
     def get_image_seg_list(self, dir):
         """ returns a tuple containing a list of all the image paths 
