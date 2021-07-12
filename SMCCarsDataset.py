@@ -64,7 +64,7 @@ class SMCCarsDataset(Dataset):
         if (segmentation.shape[0] == 4):
             segmentation = torch.split(segmentation, len(segmentation)-1, 0)[0]
         
-        image, segmentation = resize(image, segmentation)
+        image, segmentation = self.resize(image, segmentation)
 
         sample = {'image': image, 'segmentation': segmentation}
 
@@ -74,7 +74,7 @@ class SMCCarsDataset(Dataset):
         return sample
 
     def resize(self, image, segmentation):
-        if (image.channel[1] == 1024):
+        if (image.shape[1] == 1024):
             i, j, h, w = transforms.RandomCrop.get_params(image, output_size=(1024, 1820))
             image = TF.crop(image, i, j, h, w)
             segmentation = TF.crop(segmentation, i, j, h, w)
