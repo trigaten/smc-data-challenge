@@ -51,12 +51,13 @@ class SMCCarsDataset(Dataset):
 
         # convert path to image/seg to image/seg itself
         img_path = self.image_list[idx]
+        seg_path = self.seg_list[idx]
         # check that image is not corrupt
         try:
-            image = read_image(self.image_list[idx])
+            image = read_image(img_path)
         except Exception as e:
             raise Exception("Unable to read image at " + img_path + ". Verify that it is not corrupted")
-        segmentation = read_image(self.seg_list[idx])
+        segmentation = read_image(seg_path)
 
         # remove the alpha channels
         # test if alpha channel exists-- not all pngs have alpha channel
