@@ -12,6 +12,7 @@ import torch
 import torchvision
 import torchvision.transforms as transforms
 import torchvision.transforms.functional as TF
+from torchvision.transforms import InterpolationMode
 
 # for going through the folders
 import os
@@ -78,7 +79,8 @@ class SMCCarsDataset(Dataset):
             i, j, h, w = transforms.RandomCrop.get_params(image, output_size=(1024, 1820))
             image = TF.crop(image, i, j, h, w)
             segmentation = TF.crop(segmentation, i, j, h, w)
-            resize = transforms.Resize(1280, 720)
+            # NEAREST Interpolation so that segmap is logically interpolated
+            resize = transforms.Resize((720, 1280), InterpolationMode.NEAREST)
             image = resize(image)
             segmentation = resize(segmentation)
 
