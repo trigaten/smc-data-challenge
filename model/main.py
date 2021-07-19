@@ -93,15 +93,17 @@ if __name__ == "__main__":
     print(SMCCars.__len__())
     # exit()
 
+    #number of epochs & batch size
+    numEpochs = 10
+    batchSize = 1
+
     # print(device == torch.device('cuda'))
     kwargs = {'num_workers': 1, 'pin_memory': True} if device == torch.device('cuda') else {}
     train_data, test_data = torch.utils.data.random_split(SMCCars, [int(np.ceil(SMCCars.__len__()*0.8)), int(np.floor(SMCCars.__len__()*0.2))], generator=torch.Generator())
-    trainDataLoader = DataLoader(train_data, batch_size = 32, shuffle = True, **kwargs)
-    testDataLoader = DataLoader(test_data, batch_size = 32, shuffle = True, **kwargs)
+    trainDataLoader = DataLoader(train_data, batch_size = batchSize, shuffle = True, **kwargs)
+    testDataLoader = DataLoader(test_data, batch_size = batchSize, shuffle = True, **kwargs)
 
-    #number of epochs
-    numEpochs = 10
-    batchSize = 1
+
 
     #call training function
 

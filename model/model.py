@@ -28,8 +28,8 @@ def block(in_channels, out_channels,kernel_size, stride = 1, padding = 1, normal
         nn.Conv2d(in_channels, out_channels, kernel_size, stride, padding),
         nn.ReLU(),
         # nn.BatchNorm2d(out_channels),
-        # nn.Conv2d(out_channels, out_channels, kernel_size, stride, padding),
-        # nn.ReLU(),
+        nn.Conv2d(out_channels, out_channels, kernel_size, stride, padding),
+        nn.ReLU(),
         # nn.BatchNorm2d(out_channels),
     )
 
