@@ -1,4 +1,5 @@
 """
+Deprecated due to all images in Dataset now being the same size.
 A script which counts the number of images of each size in the dataset:
 NOTE: likely to produce INCORRECT results when dataset images 
 are stretched to be the same size
