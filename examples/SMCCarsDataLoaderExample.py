@@ -30,9 +30,9 @@ dataloader = DataLoader(SMCCars, batch_size=3, shuffle = True)
 
 # get a batch
 batch = next(iter(dataloader))
-# get ordered list off images in batch
+# get ordered list of images in batch
 images = batch['image']
-# get ordered list off segmentations in batch
+# get ordered list of segmentations in batch
 segs = batch['segmentation']
 
 # graph setup
