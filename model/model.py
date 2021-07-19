@@ -1,4 +1,5 @@
 import os
+# from typing_extensions import Unpack
 import torch
 from torch import nn
 from torch.nn.modules.activation import ReLU
@@ -13,12 +14,13 @@ from torchvision import datasets, transforms
 
 #block structure based on up and down blocks from here:
 #https://towardsdatascience.com/creating-and-training-a-u-net-model-with-pytorch-for-2d-3d-semantic-segmentation-model-building-6ab09d6a0862
-
+#https://divamgupta.com/image-segmentation/2019/06/06/deep-learning-semantic-segmentation-keras.html
+#design
 #worth exploring dropout, normalization, more/less blocks, more frequent conv layers v maxpooling and concat
 
 
 #conv2d -> ReLU -> Batch Normalization -> conv2d -> ReLU -> Batch Normalization -> MaxPool2D
-def downBlock(in_channels, out_channels,kernel_size, stride = 1, padding = 0, normalization = True, dropout = 0.1):
+def block(in_channels, out_channels,kernel_size, stride = 1, padding = 1, normalization = True, dropout = 0.1):
 
 
 
@@ -26,60 +28,71 @@ def downBlock(in_channels, out_channels,kernel_size, stride = 1, padding = 0, no
         nn.Conv2d(in_channels, out_channels, kernel_size, stride, padding),
         nn.ReLU(),
         # nn.BatchNorm2d(out_channels),
-        nn.Conv2d(out_channels, out_channels, kernel_size, stride, padding),
-        nn.ReLU(),
-        # nn.BatchNorm2d(out_channels),
-        nn.MaxPool2d(kernel_size, stride, padding)
-    )
-
-#convTranspose2d -> ReLU -> BatchNorm2d -> Concatenate -> conv2d -> ReLU -> BatchNorm2d -> conv2d -> ReLU -> BatchNorm2d
-def upBlock(in_channels, out_channels, kernel_size, stride = 1, padding = 0, normalization = True, dropout = 0.1):
-    block = nn.Sequential(
-        nn.ConvTranspose2d(in_channels, out_channels, kernel_size, stride, padding),
-        nn.ReLU(),
-        # nn.BatchNorm2d(out_channels),
-        nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True),
-        nn.Conv2d(out_channels, out_channels, kernel_size, stride, padding),
-        nn.ReLU(),
-        # nn.BatchNorm2d(out_channels),
-        nn.Conv2d(out_channels, out_channels, kernel_size, stride, padding),
-        nn.ReLU(),
+        # nn.Conv2d(out_channels, out_channels, kernel_size, stride, padding),
+        # nn.ReLU(),
         # nn.BatchNorm2d(out_channels),
     )
-    return block
 
 #worth implementing dropout, and normalization option
 class UNet(nn.Module):
 
-    def __init__(self, in_channels = 3, out_channels = 64, n_blocks = 4, start_filter_num = 64):
+    def __init__(self, in_channels = 3, out_channels = 64, kernel_size = 3):
         super().__init__()
-        self.in_channels = in_channels
-        self.out_channels = out_channels
-        self.n_blocks = n_blocks
-        self.start_filter_num = start_filter_num
+        # self.in_channels = in_channels
+        # self.out_channels = out_channels
+        # self.n_blocks = n_blocks
+        # self.start_filter_num = start_filter_num
 
-        self.dBlock1 = downBlock(3, 64, 2)
-        self.dBlock2 = downBlock(64, 128, 2)
-        self.dBlock3 = downBlock(128, 256, 2)
-        self.dBlock4 = downBlock(256, 512, 2)
+        self.dBlock1 = block(in_channels, out_channels, kernel_size)
+
+        new_in_channel = out_channels
+        new_out_channel = new_in_channel * 2
+        self.dBlock2 = block(new_in_channel, new_out_channel, kernel_size)
+
+        new_in_channel = new_out_channel
+        new_out_channel = new_in_channel * 2
+        self.dBlock3 = block(new_in_channel, new_out_channel, kernel_size)
+        # self.dBlock4 = downBlock(256, 512, 3)
 
         
         #need to check dimensions of stuff
-        self.uBlock1 = upBlock(512, 256, 2)
-        self.uBlock2 = upBlock(256, 128, 2)
-        self.uBlock3 = upBlock(128, 64, 2)
+        # self.uBlock3 = block(512+256, 256, 3)
+
+        # 128 + 256
+
+        new_in_channel = int(new_out_channel/2) + new_out_channel
+        new_out_channel = new_in_channel - new_out_channel
+        self.uBlock2 = block(new_in_channel, new_out_channel, kernel_size)
+
+        new_in_channel = int(new_out_channel/2) + new_out_channel
+        new_out_channel = new_in_channel - new_out_channel
+        self.uBlock1 = block(new_in_channel, new_out_channel, kernel_size)
         # self.block8 = upBlock(64, )
 
-        self.conv_last = nn.Conv2d(64, 2, 1)
+        self.conv_last = nn.Conv2d(new_out_channel, kernel_size, 1)
     def forward(self, weights):
-        weights = self.dBlock1(weights)
-        weights = self.dBlock2(weights)
-        weights = self.dBlock3(weights)
-        weights = self.dBlock4(weights)
-        weights = self.uBlock1(weights)
-        weights = self.uBlock2(weights)
-        weights = self.uBlock3(weights)
-        out = self.conv_last(weights)
+
+
+        down1 = self.dBlock1(weights)
+        pool1 = nn.MaxPool2d(2)(down1)
+
+        down2 = self.dBlock2(pool1)
+        pool2 = nn.MaxPool2d(2)(down2)
+
+        down3 = self.dBlock3(pool2)
+
+        weights = nn.Upsample(scale_factor=2)(down3)
+        weights = torch.cat([weights, down2], dim=1)
+        up2 = self.uBlock2(weights)
+
+        weights = nn.Upsample(scale_factor=2)(up2)
+        # print('weights: ' + str(weights.shape))
+        # print('down1: ' + str(down1.shape))
+        weights = torch.cat([weights, down1], dim=1)
+        up1 = self.uBlock1(weights)
+
+
+        out = self.conv_last(up1)
         return out
         #downBlock
         #downBlock
