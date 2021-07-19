@@ -25,12 +25,12 @@ import SMCCarsDataset
 
 rootdir = '../SMC21_GM_AV'
 # Number for the feature of image to transfer
-feat_val = 128
+feat_val = 70
 # instantiate an instance of the Dataset object
 SMCCars = SMCCarsDataset.SMCCarsDataset(rootdir)
 
 # get first sample
-sample_0 = SMCCars[5]
+sample_0 = SMCCars[6]
 # get its seg
 sample_0_seg = torch.clone(sample_0['segmentation'])
 # set non-feature values to 0
@@ -40,7 +40,7 @@ sample_0_seg_mask = torch.sum(sample_0_seg, 0)
 # get image
 sample_0_image = torch.clone(sample_0['image'])
 
-sample_1 = SMCCars[15]
+sample_1 = SMCCars[200]
 sample_1_seg = torch.clone(sample_1['segmentation'])
 sample_1_image = torch.clone(sample_1['image'])
 
