@@ -12,6 +12,7 @@ import torch
 import torchvision
 import torchvision.transforms as transforms
 import torchvision.transforms.functional as TF
+from torchvision.transforms import InterpolationMode
 
 # for going through the folders
 import os
@@ -50,13 +51,17 @@ class SMCCarsDataset(Dataset):
 
         # convert path to image/seg to image/seg itself
         img_path = self.image_list[idx]
+        seg_path = self.seg_list[idx]
         # check that image is not corrupt
         try:
-            image = read_image(self.image_list[idx])
+            image = read_image(img_path)
         except Exception as e:
             raise Exception("Unable to read image at " + img_path + ". Verify that it is not corrupted")
-        segmentation = read_image(self.seg_list[idx])
+        segmentation = read_image(seg_path)
 
+        image = image.float()
+        segmentation = segmentation.float()
+        
         # remove the alpha channels
         # test if alpha channel exists-- not all pngs have alpha channel
         if (image.shape[0] == 4):
@@ -78,7 +83,8 @@ class SMCCarsDataset(Dataset):
             i, j, h, w = transforms.RandomCrop.get_params(image, output_size=(1024, 1820))
             image = TF.crop(image, i, j, h, w)
             segmentation = TF.crop(segmentation, i, j, h, w)
-            resize = transforms.Resize(1280, 720)
+            # NEAREST Interpolation so that segmap is logically interpolated
+            resize = transforms.Resize((720, 1280), InterpolationMode.NEAREST)
             image = resize(image)
             segmentation = resize(segmentation)
 
@@ -89,6 +95,8 @@ class SMCCarsDataset(Dataset):
         and a list of all the segmentation image paths """
         images, segmentations = [], []
         for image_type_folder in os.listdir(dir):
+            if image_type_folder == ".DS_Store":
+                continue
             # get the path of the folder (like Cityscapes of ClearNoon)
             image_type_path = os.path.join(dir, image_type_folder)
 
