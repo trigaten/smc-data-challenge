@@ -52,7 +52,6 @@ class SMCCarsDataset(Dataset):
         # convert path to image/seg to image/seg itself
         img_path = self.image_list[idx]
         seg_path = self.seg_list[idx]
-        print(img_path)
         # check that image is not corrupt
         try:
             image = read_image(img_path)
