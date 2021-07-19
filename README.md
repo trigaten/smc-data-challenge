@@ -10,7 +10,7 @@ SMC21_GM_AV/HardRainNoon/images/00000029.png
 
 ### First chmod it:
 
-`chmod +x chmod +x Remove_Images.sh`
+`chmod +x Remove_Images.sh`
 
 ### Then run 
 
