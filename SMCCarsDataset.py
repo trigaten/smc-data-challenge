@@ -59,6 +59,9 @@ class SMCCarsDataset(Dataset):
             raise Exception("Unable to read image at " + img_path + ". Verify that it is not corrupted")
         segmentation = read_image(seg_path)
 
+        image = image.float()
+        segmentation = segmentation.float()
+        
         # remove the alpha channels
         # test if alpha channel exists-- not all pngs have alpha channel
         if (image.shape[0] == 4):
