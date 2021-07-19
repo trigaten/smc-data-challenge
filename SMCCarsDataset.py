@@ -52,6 +52,7 @@ class SMCCarsDataset(Dataset):
         # convert path to image/seg to image/seg itself
         img_path = self.image_list[idx]
         seg_path = self.seg_list[idx]
+        print(img_path)
         # check that image is not corrupt
         try:
             image = read_image(img_path)
@@ -92,6 +93,8 @@ class SMCCarsDataset(Dataset):
         and a list of all the segmentation image paths """
         images, segmentations = [], []
         for image_type_folder in os.listdir(dir):
+            if image_type_folder == ".DS_Store":
+                continue
             # get the path of the folder (like Cityscapes of ClearNoon)
             image_type_path = os.path.join(dir, image_type_folder)
 
