@@ -1,8 +1,5 @@
 """
-A script which counts the number of images of each size in the dataset:
-NOTE: likely to produce INCORRECT results when dataset images 
-are stretched to be the same size
-{torch.Size([3, 720, 1280]): 4898, torch.Size([3, 1024, 2048]): 700}
+A script which transfers part of an image onto another image
 """
 
 __author__ = "Sander Schulhoff"
@@ -12,7 +9,7 @@ import torch
 import torchvision
 import torchvision.transforms as transforms
 
-# for visualizatio
+# for visualization
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -27,7 +24,8 @@ sys.path.append("..")
 import SMCCarsDataset
 
 rootdir = '../SMC21_GM_AV'
-
+# Number for the feature of image to transfer
+feat_val = 128
 # instantiate an instance of the Dataset object
 SMCCars = SMCCarsDataset.SMCCarsDataset(rootdir)
 
@@ -36,7 +34,7 @@ sample_0 = SMCCars[5]
 # get its seg
 sample_0_seg = torch.clone(sample_0['segmentation'])
 # set non-feature values to 0
-sample_0_seg[sample_0_seg!=128] = 0
+sample_0_seg[sample_0_seg!=feat_val] = 0
 # sum tensor across channels
 sample_0_seg_mask = torch.sum(sample_0_seg, 0)
 # get image
