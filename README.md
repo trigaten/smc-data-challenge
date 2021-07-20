@@ -18,7 +18,7 @@ SMC21_GM_AV/HardRainNoon/images/00000029.png
 
 ## Notes about running the model:
 1) Run main.py
-2) run evalulate.py for prediction results
+2) run evalulate.py for prediction results (python3 evalulate.py ./results)
 
 ## conda environment dependencies
   - torchaudio

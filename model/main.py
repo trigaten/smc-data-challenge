@@ -76,6 +76,10 @@ def predictions(dataLoader, model, batchSize):
     model = model.eval()
 
     #create gt and pred directories
+
+    if not os.path.isdir('results'):
+        os.mkdir('results')
+    os.chdir('results')
     if not os.path.isdir('gt'):
         os.mkdir('gt')
     if not os.path.isdir('pred'):
@@ -133,6 +137,9 @@ if __name__ == "__main__":
     kwargs = {'num_workers': 1, 'pin_memory': True} if device == torch.device('cuda') else {}
 
     #create random 80/20 split for train/test
+
+    #in case you want to load in model, there is a better way to do this (i.e., save train and test data locallys)
+    torch.manual_seed(99)
     train_data, test_data = torch.utils.data.random_split(SMCCars, [int(np.ceil(SMCCars.__len__()*0.8)), int(np.floor(SMCCars.__len__()*0.2))], generator=torch.Generator())
     trainDataLoader = DataLoader(train_data, batch_size = batchSize, shuffle = True, **kwargs)
     testDataLoader = DataLoader(test_data, batch_size = batchSize, shuffle = True, **kwargs)
