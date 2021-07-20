@@ -1,5 +1,9 @@
+# File: model.py
+# Author: Gerson Kroiz
+# Description: UNET implementation 
+# in pytorch
+
 import os
-# from typing_extensions import Unpack
 import torch
 from torch import nn
 from torch.nn.modules.activation import ReLU
@@ -8,8 +12,6 @@ from torch.nn.modules.conv import Conv2d
 from torch.nn.modules.pooling import MaxPool2d
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
-
-# device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 
 #block structure based on up and down blocks from here:
@@ -86,16 +88,10 @@ class UNet(nn.Module):
         up2 = self.uBlock2(weights)
 
         weights = nn.Upsample(scale_factor=2)(up2)
-        # print('weights: ' + str(weights.shape))
-        # print('down1: ' + str(down1.shape))
         weights = torch.cat([weights, down1], dim=1)
         up1 = self.uBlock1(weights)
 
 
         out = self.conv_last(up1)
         return out
-        #downBlock
-        #downBlock
-        #upBlock
-        #upBlock
-        #con2vD
+  
