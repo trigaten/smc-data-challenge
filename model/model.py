@@ -12,7 +12,7 @@ from torch.nn.modules.conv import Conv2d
 from torch.nn.modules.pooling import MaxPool2d
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
-
+import GPUtil
 
 #block structure based on up and down blocks from here:
 #https://towardsdatascience.com/creating-and-training-a-u-net-model-with-pytorch-for-2d-3d-semantic-segmentation-model-building-6ab09d6a0862
@@ -38,7 +38,7 @@ def block(in_channels, out_channels,kernel_size, stride = 1, padding = 1, normal
 #worth implementing dropout, and normalization option
 class UNet(nn.Module):
 
-    def __init__(self, in_channels = 3, out_channels = 64, kernel_size = 3):
+    def __init__(self, in_channels = 3, out_channels = 32, kernel_size = 3):
         super().__init__()
         # self.in_channels = in_channels
         # self.out_channels = out_channels
@@ -73,24 +73,37 @@ class UNet(nn.Module):
 
         self.conv_last = nn.Conv2d(new_out_channel, 15, 1)
     def forward(self, weights):
-
+        # print('in forward')
+        # GPUtil.showUtilization()
 
         down1 = self.dBlock1(weights)
         pool1 = nn.MaxPool2d(2)(down1)
+        # print('after pool1')
+        # GPUtil.showUtilization()
 
         down2 = self.dBlock2(pool1)
         pool2 = nn.MaxPool2d(2)(down2)
 
+        # print('after pool2')
+        # GPUtil.showUtilization()
+
         down3 = self.dBlock3(pool2)
+
 
         weights = nn.Upsample(scale_factor=2)(down3)
         weights = torch.cat([weights, down2], dim=1)
         up2 = self.uBlock2(weights)
-
+        # print('after up2')
+        # GPUtil.showUtilization()
         weights = nn.Upsample(scale_factor=2)(up2)
+        # print('after second upsample')
+        # GPUtil.showUtilization()
         weights = torch.cat([weights, down1], dim=1)
+        # print('after second cat')
+        # GPUtil.showUtilization()
         up1 = self.uBlock1(weights)
-
+        # print('after up1')
+        # GPUtil.showUtilization()
 
         out = self.conv_last(up1)
         return out
