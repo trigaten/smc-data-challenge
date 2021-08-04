@@ -71,7 +71,7 @@ class UNet(nn.Module):
         self.uBlock1 = block(new_in_channel, new_out_channel, kernel_size)
         # self.block8 = upBlock(64, )
 
-        self.conv_last = nn.Conv2d(new_out_channel, kernel_size, 1)
+        self.conv_last = nn.Conv2d(new_out_channel, 15, 1)
     def forward(self, weights):
 
 

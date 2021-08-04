@@ -47,17 +47,27 @@ def training(numEpochs, dataLoader, model, batchSize):
             
             #put inputs and labels on gpu if permitted
             inputs = inputs.to(device)
-            labels = labels.to(device)
+
+            labels = labels.squeeze(axis=1)
+            labels = labels.to(device, dtype=torch.int64)
+
 
             #print model summary
             if batch_idx == 0 and epoch == 0:
+                print('before summary')
                 print(summary(model, input_size=(3, 1280, 720)))
-
+                print('after summary')
             #output from model
             out = model(inputs)
 
             #calculate loss
-            loss = loss_func(torch.sigmoid(out), torch.sigmoid(labels))
+            # loss = loss_func(torch.sigmoid(out), torch.sigmoid(labels))
+
+            # out = out.long()
+            # labels = labels.long()
+            # out = out.cuda()
+            labels = torch.cuda.LongTensor(labels)#.long().to(device)
+            loss = loss_func(out, labels)
 
             # Backward
             opt.zero_grad()
@@ -102,7 +112,6 @@ def predictions(dataLoader, model, batchSize):
 
 
 
-
 if __name__ == "__main__":
     print('program started')
 
@@ -125,14 +134,17 @@ if __name__ == "__main__":
     opt = torch.optim.Adam(model.parameters())
 
     #binary cross entropy loss function
-    loss_func = nn.BCELoss()
+    # loss_func = nn.BCELoss()
+
+    #cross entropy loss function
+    loss_func = nn.CrossEntropyLoss().to(device)
 
     #load data
     SMCCars = SMCCarsDataset.SMCCarsDataset(rootdir)
-
+    sample = SMCCars[2193]
     #number of epochs & batch size
-    numEpochs = 20
-    batchSize = 8
+    numEpochs = 25
+    batchSize = 1
 
     kwargs = {'num_workers': 1, 'pin_memory': True} if device == torch.device('cuda') else {}
 
@@ -143,10 +155,10 @@ if __name__ == "__main__":
     train_data, test_data = torch.utils.data.random_split(SMCCars, [int(np.ceil(SMCCars.__len__()*0.8)), int(np.floor(SMCCars.__len__()*0.2))], generator=torch.Generator())
     trainDataLoader = DataLoader(train_data, batch_size = batchSize, shuffle = True, **kwargs)
     testDataLoader = DataLoader(test_data, batch_size = batchSize, shuffle = True, **kwargs)
-
-
-
+    
     #call training function
+
+
     training(numEpochs, trainDataLoader, model, batchSize)
 
     #load previously trained model
