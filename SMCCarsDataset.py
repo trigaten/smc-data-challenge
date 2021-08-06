@@ -1,4 +1,3 @@
-
 """ Dataset object for the car images adapted from 
 https://pytorch.org/tutorials/beginner/data_loading_tutorial.html. This class 
 extends Pytorch's Dataset class and makes the image data easily accesible.
@@ -24,7 +23,7 @@ from torch.utils.data import Dataset
 from torchvision.io import read_image
 
 class SMCCarsDataset(Dataset):
-    def __init__(self, root_dir, transform=None):
+    def __init__(self, root_dir, traditionaltransform=False, styleTransform=False, overlayTransform=False):
         """
         Args:
             root_dir (string): Directory with all the images 
@@ -36,7 +35,9 @@ class SMCCarsDataset(Dataset):
         self.image_list, self.seg_list = self.get_image_seg_list(root_dir)
         self.root_dir = root_dir
 
-        self.transform = transform
+        self.traditionalTransform = traditionalTransform
+        self.styleTransform = styleTransform
+        self.overlayTransform = overlayTransform
 
     def __len__(self):
         return len(self.image_list)
@@ -71,12 +72,49 @@ class SMCCarsDataset(Dataset):
         
         image, segmentation = self.resize(image, segmentation)
 
+        if self.traditionalTransform:
+            image, segmentation = self.transform(image, segmentation)
+
         sample = {'image': image, 'segmentation': segmentation}
 
-        if self.transform:
-            sample = self.transform(sample)
-
         return sample
+
+    def transform(self, img, seg):
+        # To PIL
+        image = TF.to_pil_image(img)
+        segmentation = TF.to_pil_image(seg)
+
+        # Random Crop
+        i, j, h, w = transforms.RandomCrop.get_params(image, output_size=(
+        int(self.cropFactor * self.leastHeight), int(self.cropFactor * self.leastWidth)))
+        image = TF.crop(image, i, j, h, w)
+        segmentation = TF.crop(segmentation, i, j, h, w)
+
+        # Random Flip
+        if random.random() > 0.5:
+            image = TF.hflip(image)
+            segmentation = TF.hflip(segmentation)
+
+        # Jitters colors
+        jitter = transforms.ColorJitter(brightness=0.5, hue=0.5, contrast=0.5, saturation=0.5)
+        image = jitter(image)
+
+        # To Tensor
+        image = TF.to_tensor(image)
+        segmentation = TF.to_tensor(segmentation)
+
+        # Normalize
+        # image = TF.normalize(image, mean=self.meanImageColor, std=self.stdImageColor)
+
+        return image, segmentation
+
+    def styleTransfer:
+        # put style transfer here
+        return 0
+
+    def overlay:
+        # put overlay here
+        return 0
 
     def resize(self, image, segmentation):
         if (image.shape[1] == 1024):
