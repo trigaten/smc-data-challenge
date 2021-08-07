@@ -87,7 +87,7 @@ def rgb_to_single(rgb_arr, color_dict):
 #    return np.uint8(output)
 
 class SMCCarsDataset(Dataset):
-    def __init__(self, root_dir, transform=None):
+    def __init__(self, root_dir, transform=None, returnCity=True,returnSynth=False):
         """
         Args:
             root_dir (string): Directory with all the images 
@@ -95,6 +95,8 @@ class SMCCarsDataset(Dataset):
             transform (callable, optional): Optional transform to be applied
                 on a sample.
         """
+        self.returnCity = returnCity
+        self.returnSynth = returnSynth
         # a list containing the path of every image
         self.image_list, self.seg_list = self.get_image_seg_list(root_dir)
         self.root_dir = root_dir
@@ -121,8 +123,6 @@ class SMCCarsDataset(Dataset):
         except Exception as e:
             raise Exception("Unable to read image at " + img_path + ". Verify that it is not corrupted")
         segmentation = read_image(seg_path)
-
-        
 
         image = image.float()
         segmentation = segmentation.float()
