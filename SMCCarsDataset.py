@@ -24,7 +24,7 @@ from torch.utils.data import Dataset
 from torchvision.io import read_image
 
 class SMCCarsDataset(Dataset):
-    def __init__(self, root_dir, transform=None):
+    def __init__(self, root_dir, transform=None, returnCity=True,returnSynth=False):
         """
         Args:
             root_dir (string): Directory with all the images 
@@ -32,6 +32,8 @@ class SMCCarsDataset(Dataset):
             transform (callable, optional): Optional transform to be applied
                 on a sample.
         """
+        self.returnCity = returnCity
+        self.returnSynth = returnSynth
         # a list containing the path of every image
         self.image_list, self.seg_list = self.get_image_seg_list(root_dir)
         self.root_dir = root_dir
@@ -97,6 +99,15 @@ class SMCCarsDataset(Dataset):
         for image_type_folder in os.listdir(dir):
             if image_type_folder == ".DS_Store":
                 continue
+            print(image_type_folder)
+
+            if not self.returnCity:
+                if image_type_folder == "Cityscapes":
+                    continue
+            if not self.returnSynth:
+                if image_type_folder != "Cityscapes":
+                    continue
+            print("YES")
             # get the path of the folder (like Cityscapes of ClearNoon)
             image_type_path = os.path.join(dir, image_type_folder)
 

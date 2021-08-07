@@ -256,14 +256,8 @@ def run_style_transfer(cnn, normalization_mean, normalization_std,
 # based on https://pytorch.org/tutorials/advanced/neural_style_tutorial.html#introduction
 #inputs: cnn (network), content_image (content image), cityscapedir (directory where cityscape images are located)
 #output: output (resulting image with style transfer applied)
-def style_transfer(cnn, content_img, cityscapedir):
-
-    rand_file_name = random.choice(os.listdir(cityscapedir + '/images'))
-    print('loc: ' + str(cityscapedir + '/images/' + rand_file_name))
-    style_img = image_loader(cityscapedir + '/images/' + rand_file_name)
-
-    assert style_img.size() == content_img.size(), \
-    "we need to import style and content images of the same size"
+def style_transfer(content_img, style_img):
+    cnn = models.vgg19(pretrained=True).features.to(device).eval()
 
     input_img = content_img.clone()
     cnn_normalization_mean = torch.tensor([0.485, 0.456, 0.406]).to(device)
@@ -284,11 +278,11 @@ def imshow(tensor, title=None):
         plt.title(title)
     plt.pause(0.001) # pause a bit so that plots are updated
 
-if __name__ == '__main__':
-    content_img = image_loader('/raid/gkroiz1/SMC21_GM_AV/CloudySunset/images/00000360.png')
-    cityscapedir = '/raid/gkroiz1/SMC21_GM_AV/Cityscapes'
-    cnn = models.vgg19(pretrained=True).features.to(device).eval()
-    output = style_transfer(cnn, content_img, cityscapedir)
-    plt.figure()
-    imshow(output, title='Output Image')
-    plt.savefig('output.png')
+# if __name__ == '__main__':
+#     content_img = image_loader('/raid/gkroiz1/SMC21_GM_AV/CloudySunset/images/00000360.png')
+#     cityscapedir = '/raid/gkroiz1/SMC21_GM_AV/Cityscapes'
+#     cnn = models.vgg19(pretrained=True).features.to(device).eval()
+#     output = style_transfer(cnn, content_img, cityscapedir)
+#     plt.figure()
+#     imshow(output, title='Output Image')
+#     plt.savefig('output.png')
