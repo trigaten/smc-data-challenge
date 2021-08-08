@@ -5,8 +5,10 @@ __author__ = "Sander Schulhoff"
 __email__ = "sanderschulhoff@gmail.com"
 
 import sys
+import torch
+import _osx_support
 import torchvision.io as IO
-import model from model.model.CnnUNet
+from model import model.CnnUNet
 from torchvision.utils import save_image
 
 model = CnnUNet("USE_PRETRAINED_WEIGHTS_FLAG")
@@ -15,7 +17,7 @@ model = CnnUNet("USE_PRETRAINED_WEIGHTS_FLAG")
 directory = sys.argv[1]
 
 for index, image_file in enumerate(os.listdir(directory)):
-    image = IO.read_image(img_path)
+    image = IO.read_image(image_file)
     pred_seg_map = model(torch.unsqueeze(image, 0))
     save_image(pred_seg_map, directory + "/seg" + str(index))
 
