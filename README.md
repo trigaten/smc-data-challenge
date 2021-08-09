@@ -15,3 +15,8 @@ SMC21_GM_AV/HardRainNoon/images/00000029.png
 ### Then run 
 
 `./Remove_Images.sh`
+
+
+## Most segmaps are not entirely helpful due to project specs
+
+### run fix_segs.py to fix this

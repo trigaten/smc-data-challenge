@@ -1,5 +1,5 @@
 """ Dataset object for the car images adapted from 
-https://pytorch.org/tutorials/beginner/data_loading_tutorial.html. This class 
+https://pytorch.org/tutorials/beginner/data_loading_tutorial.html. This class
 extends Pytorch's Dataset class and makes the image data easily accessible.
 Note: indexing is supported, but slicing is currently not.
     """
@@ -141,7 +141,8 @@ class SMCCarsDataset(Dataset):
             images_path = os.path.join(image_type_path, "images")
             # append all image paths to the list
             for image_file in os.listdir(images_path):
-                # check for hidden .DS_STORE filess
+
+               # check for hidden .DS_STORE filess
                 if image_file.find(".DS_Store") != -1:
                     continue
                 images.append(os.path.join(images_path, image_file))
@@ -171,26 +172,8 @@ color_dict = {0: (70, 70, 70), # Building
 			  14: (0, 0, 0), # Anything else
 			  }
 
-#not needed rn			  
-color_list = [(70, 70, 70),
-			  (190, 153, 153),
-			  (153, 153, 153),
-			  (244, 35, 232),
-			  (107, 142, 35),
-			  (102, 102, 156),
-			  (128, 64, 128),
-			  (220, 220, 0),
-			  (220, 20, 60),
-			  (0, 0, 142),
-			  (0, 0, 70),
-			  (0, 60, 100),
-			  (0, 80, 100),
-			  (119, 11, 32),
-			  ]
-
 #convert from a numpy array from (3, y, x) -> (15, y, x)
-def rgb_to_onehot(segmentation, color_dict):
-    #shape = (3, 720, 1280)
+def rgb_to_onehot(segmentation, color_dict=color_dict):
     rgb_arr = segmentation.cpu().detach().numpy()
     rgb_arr = np.transpose(rgb_arr, (1, 2, 0))
     num_classes = len(color_dict)
@@ -206,7 +189,7 @@ def rgb_to_onehot(segmentation, color_dict):
 
 
 #for converting from onehot to rgb: (15, y, x) -> (3, y, x)
-def onehot_to_rgb(segmentation, color_dict):
+def onehot_to_rgb(segmentation, color_dict=color_dict):
     onehot = segmentation.cpu().detach().numpy()
     onehot = np.transpose(onehot, (1, 2, 0))
     single_layer = np.argmax(onehot, axis=-1)
@@ -218,53 +201,20 @@ def onehot_to_rgb(segmentation, color_dict):
     output = torch.from_numpy(output)
     return output
 
-def rc(sample_0, datasetObj):
-    import matplotlib.pyplot as plt
-
-    oneHot1seg = rgb_to_onehot(sample_0['segmentation'], color_dict)
-    sample_1 = datasetObj[0]
-    oneHot2seg = rgb_to_onehot(sample_1['segmentation'], color_dict)
-    index = 3
-    new_image = torch.where(oneHot1seg[index] > 0, sample_1['image'], sample_0['image'])
-    # oneHot1seg[index] = torch.max(oneHot1seg[index], oneHot2seg[index]) 
-    
-    fig = plt.figure(figsize=(8, 8))
-    # exit()
-    ax = fig.add_subplot(3, 2, 1)
-    imgplot = plt.imshow(sample_0['image'].permute(1, 2, 0))
-    ax.set_title('First image')
-
-    ax = fig.add_subplot(3, 2, 2)
-    imgplot = plt.imshow(sample_0['segmentation'].permute(1, 2, 0))
-    ax.set_title('First seg')
-
-    ax = fig.add_subplot(3, 2, 3)
-    imgplot = plt.imshow(sample_1['image'].permute(1, 2, 0))
-    ax.set_title('Second image')
-
-    ax = fig.add_subplot(3, 2, 4)
-    imgplot = plt.imshow(sample_1['segmentation'].permute(1, 2, 0))
-    ax.set_title('Second seg')
-
-    ax = fig.add_subplot(3, 2, 5)
-    imgplot = plt.imshow(new_image.permute(1, 2, 0))
-    ax.set_title('New Image')
-
-    ax = fig.add_subplot(3, 2, 6)
-
-    imgplot = plt.imshow(onehot_to_rgb(oneHot1seg, color_dict).permute(1, 2, 0))
-    ax.set_title('New Seg')
-
-
-
-    plt.show()
-
-
 if __name__ == '__main__':
     rootdir = 'SMC21_GM_AV'
     # instantiate an instance of the Dataset object
     SMCCars = SMCCarsDataset(rootdir)
     sample = SMCCars[2193]
-    rc(sample, SMCCars)
+ 
+   # ax = fig.add_subplot(3, 2, 5)
+    # imgplot = plt.imshow(new_im.permute(1, 2, 0))
+    # ax.set_title('New Image')
+    
+    # ax = fig.add_subplot(3, 2, 6)
+    # imgplot = plt.imshow(onehot_to_rgb(segmentation, color_dict).permute(1, 2, 0))
+    # ax.set_title('New Seg')
+    
+    
 
-
+    # plt.show()
