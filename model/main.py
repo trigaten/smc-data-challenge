@@ -41,7 +41,7 @@ import argparse
 
 
 #basic training function
-def training(rank, numEpochs, dataLoader, model, opt, loss_func):
+def training(rank, numEpochs, dataLoader, model, opt, loss_func, save_model_loc):
     print('in training')
     model.train()
     for epoch in range(numEpochs):
@@ -62,8 +62,8 @@ def training(rank, numEpochs, dataLoader, model, opt, loss_func):
 
 
             #print model summary
-            # if batch_idx == 0 and epoch == 0 and rank == 0:
-            #     print(summary(model, input_size=(3, 1280, 720)))
+            if batch_idx == 0 and epoch == 0 and rank == 0:
+                print(summary(model, input_size=(3, 1280, 720)))
             #output from model
 
             # if rank == 0:
@@ -88,7 +88,7 @@ def training(rank, numEpochs, dataLoader, model, opt, loss_func):
             opt.step()
         endEpoch = time.time()
         print(f"\nEpoch: {epoch}/{numEpochs}, Loss: {loss}, 'Time: {endEpoch-startEpoch}")
-    torch.save(model.state_dict(), 'model.pt')
+    torch.save(model.state_dict(), save_model_loc)
     print("saved model")
 
 
@@ -186,6 +186,10 @@ if __name__ == "__main__":
 
     #load data
     rootdir = '/raid/gkroiz1/SMC21_GM_AV'
+    rootdir = '/raid/gkroiz1/SMC21_GM_AV_w_style'
+    save_model_loc = 'default-model.pt'
+
+    save_model_loc = 'style-model.pt'
 
 
 
@@ -208,7 +212,7 @@ if __name__ == "__main__":
     parser.add_argument("--local_rank", type=int)
     args = parser.parse_args()
 
-    numEpochs = 25
+    numEpochs = 100
     batchSize = 5
 
     rank = args.local_rank
@@ -228,8 +232,9 @@ if __name__ == "__main__":
     if rank == 0:
         print('after creating model: ')
         GPUtil.showUtilization()
+
     #call training function
-    training(rank, numEpochs, trainDataLoader, model, opt, loss_func)
+    training(rank, numEpochs, trainDataLoader, model, opt, loss_func, save_model_loc)
 
     #load previously trained model
     # model = UNet()
@@ -239,7 +244,7 @@ if __name__ == "__main__":
     # model.to(device)
 
     #call testing function
-    predictions(testDataLoader, model, batchSize)
+    # predictions(testDataLoader, model, batchSize)
 
 
 
