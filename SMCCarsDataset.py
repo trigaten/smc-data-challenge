@@ -126,22 +126,33 @@ class SMCCarsDataset(Dataset):
 
         return image, segmentation
 
-    def get_image_seg_list(self, directory):
+    def get_image_seg_list(self, dir):
+        """ returns a tuple containing a list of all the image paths 
+        and a list of all the segmentation image paths """
         images, segmentations = [], []
+        for image_type_folder in os.listdir(dir):
+            if image_type_folder == ".DS_Store":
+                continue
+            # get the path of the folder (like Cityscapes of ClearNoon)
+            image_type_path = os.path.join(dir, image_type_folder)
 
-        # the path for images
-        images_path = os.path.join(directory, "images")
-        # append all image paths to the list
-        for image_file in os.listdir(images_path):
-            images.append(os.path.join(images_path, image_file))
+            # the path for images
+            images_path = os.path.join(image_type_path, "images")
+            # append all image paths to the list
+            for image_file in os.listdir(images_path):
+                # check for hidden .DS_STORE filess
+                if image_file.find(".DS_Store") != -1:
+                    continue
+                images.append(os.path.join(images_path, image_file))
 
-        # the path for the segmentations
-        segmentations_path = os.path.join(directory, "segmentations")
-        # append all segmentation image paths to the list
-        for segmentation_file in os.listdir(segmentations_path):
-            segmentations.append(os.path.join(segmentations_path, segmentation_file))
+            # the path for the segmentations
+            segmentations_path = os.path.join(image_type_path, "segmentations")
+            # append all segmentation image paths to the list
+            for segmentation_file in os.listdir(segmentations_path):
+                segmentations.append(os.path.join(segmentations_path, segmentation_file))
 
-        return images, segmentations
+        return (images, segmentations)
+
 
 
 if __name__ == '__main__':
