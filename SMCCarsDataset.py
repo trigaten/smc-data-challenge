@@ -14,6 +14,7 @@ import torchvision.transforms.functional as TF
 import torchvision.io as IO
 import os
 from torch.utils.data import Dataset
+import numpy as np
 
 
 class SMCCarsDataset(Dataset):
@@ -153,7 +154,70 @@ class SMCCarsDataset(Dataset):
 
         return (images, segmentations)
 
+color_dict = {0: (70, 70, 70), # Building
+              1: (190, 153, 153), # Fence
+              2: (153, 153, 153), # Pole
+			  3: (244, 35, 232), # Sidewalk
+			  4: (107, 142, 35), # Vegetation
+			  5: (102, 102, 156), # Wall 
+			  6: (128, 64, 128), # Road / road line
+			  7: (220, 220, 0), # Traffic light / sign
+			  8: (220, 20, 60), # Person / rider
+			  9: (0, 0, 142), # Car
+			  10: (0, 0, 70), # Truck
+			  11: (0, 60, 100), # Bus
+			  12: (0, 80, 100), # Train
+			  13: (119, 11, 32), # Motorcycle / Bicycle
+			  14: (0, 0, 0), # Anything else
+			  }
 
+#not needed rn			  
+color_list = [(70, 70, 70),
+			  (190, 153, 153),
+			  (153, 153, 153),
+			  (244, 35, 232),
+			  (107, 142, 35),
+			  (102, 102, 156),
+			  (128, 64, 128),
+			  (220, 220, 0),
+			  (220, 20, 60),
+			  (0, 0, 142),
+			  (0, 0, 70),
+			  (0, 60, 100),
+			  (0, 80, 100),
+			  (119, 11, 32),
+			  ]
+random.seed()
+
+#convert from a numpy array from (3, y, x) -> (15, y, x)
+def rgb_to_onehot(segmentation, color_dict):
+    #shape = (3, 720, 1280)
+    rgb_arr = segmentation.cpu().detach().numpy()
+    rgb_arr = np.transpose(rgb_arr, (1, 2, 0))
+    num_classes = len(color_dict)
+    shape = rgb_arr.shape[:2]+(num_classes,)
+    #print(num_classes, shape)
+    arr = np.zeros( shape, dtype=np.int8 )
+    #print(arr, arr.shape)
+    for i, cls in enumerate(color_dict):
+        arr[:,:,i] = np.all(rgb_arr.reshape( (-1,3) ) == color_dict[i], axis=1).reshape(shape[:2])
+    arr = np.transpose(arr, (2, 0, 1))
+    arr = torch.from_numpy(arr)
+    return arr
+
+
+#for converting from onehot to rgb: (15, y, x) -> (3, y, x)
+def onehot_to_rgb(segmentation, color_dict):
+    onehot = segmentation.cpu().detach().numpy()
+    onehot = np.transpose(onehot, (1, 2, 0))
+    single_layer = np.argmax(onehot, axis=-1)
+    output = np.zeros( onehot.shape[:2]+(3,) )
+    for k in color_dict.keys():
+        output[single_layer==k] = color_dict[k] 
+    output = np.uint8(output)
+    output = np.transpose(output, (2, 0, 1))
+    output = torch.from_numpy(output)
+    return output
 
 if __name__ == '__main__':
     rootdir = 'SMC21_GM_AV'
