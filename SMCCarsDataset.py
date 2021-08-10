@@ -1,5 +1,5 @@
 """ Dataset object for the car images adapted from 
-https://pytorch.org/tutorials/beginner/data_loading_tutorial.html. This class
+https://pytorch.org/tutorials/beginner/data_loading_tutorial.html. This class 
 extends Pytorch's Dataset class and makes the image data easily accessible.
 Note: indexing is supported, but slicing is currently not.
     """
@@ -15,7 +15,7 @@ import torchvision.io as IO
 import os
 from torch.utils.data import Dataset
 import numpy as np
-
+from matplotlib import pyplot as plt
 
 class SMCCarsDataset(Dataset):
     def __init__(self, root_dir, traditionalTransform=False, styleTransform=False, overlayTransform=False):
@@ -47,7 +47,7 @@ class SMCCarsDataset(Dataset):
     def __len__(self):
         return len(self.image_list)
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx, transform=True):
         """ The indexing method for this object. If you have an instance of this object you can 
         do instance[0] to get the first data sample, for example. 
         :return: a tuple of pytorch tensors-- the image and its segmentation map
@@ -65,8 +65,8 @@ class SMCCarsDataset(Dataset):
             raise Exception("Unable to read image at " + img_path + ". Verify that it is not corrupted")
         segmentation = IO.read_image(seg_path)
 
-        # image = image.float()
-        # segmentation = segmentation.float()
+        #image = image.float()
+        #segmentation = segmentation.float()
         
         # remove the alpha channels
         # test if alpha channel exists-- not all pngs have alpha channel
@@ -77,8 +77,12 @@ class SMCCarsDataset(Dataset):
         
         image, segmentation = self.resize(image, segmentation)
 
-        if self.traditionalTransform:
+        if self.traditionalTransform and transform:
             image, segmentation = self.transform(image, segmentation)
+
+        if self.overlayTransform and transform:
+            if idx == 1:
+                image, segmentation = self.overlay(image, segmentation)
 
         sample = {'image': image, 'segmentation': segmentation}
 
@@ -111,10 +115,27 @@ class SMCCarsDataset(Dataset):
         segmentation = TF.to_tensor(segmentation)
 
         # Normalize
-        # image = TF.normalize(image, mean=self.meanImageColor, std=self.stdImageColor)
+        image = TF.normalize(image, mean=([79.2499, 76.9359, 70.4941]), std=([43.6275, 41.8426, 42.0789]))
 
         return image, segmentation
-
+    
+    def overlay(self, img, seg):
+        #converts original segmentations to onehot (base)
+        original_sample_seg = torch.clone(seg)
+        original_sample_seg = rgb_to_onehot(original_sample_seg, color_dict)
+        
+        #randomly selects new image to extract segmentation from
+        #transform=False prevents code from entering infinite loop
+        random_sample = self.__getitem__(random.randint(0, self.__len__()-1), transform=False)
+        
+        index = random.randint(0, original_sample_seg.size()[0]-1)
+        
+        overlay_seg = rgb_to_onehot(random_sample['segmentation'], color_dict)
+        new_img = torch.where(overlay_seg[index]>0, random_sample['image'], img) 
+        new_seg = torch.where(overlay_seg[index]>0, overlay_seg, original_sample_seg)
+        
+        return new_img, new_seg
+    
     def resize(self, image, segmentation):
         if image.shape[1] == 1024:
             i, j, h, w = transforms.RandomCrop.get_params(image, output_size=(1024, 1820))
@@ -141,8 +162,7 @@ class SMCCarsDataset(Dataset):
             images_path = os.path.join(image_type_path, "images")
             # append all image paths to the list
             for image_file in os.listdir(images_path):
-
-               # check for hidden .DS_STORE filess
+                # check for hidden .DS_STORE filess
                 if image_file.find(".DS_Store") != -1:
                     continue
                 images.append(os.path.join(images_path, image_file))
@@ -202,19 +222,12 @@ def onehot_to_rgb(segmentation, color_dict=color_dict):
     return output
 
 if __name__ == '__main__':
-    rootdir = 'SMC21_GM_AV'
+    rootdir = 'smcdc_c3'
     # instantiate an instance of the Dataset object
     SMCCars = SMCCarsDataset(rootdir)
-    sample = SMCCars[2193]
- 
-   # ax = fig.add_subplot(3, 2, 5)
-    # imgplot = plt.imshow(new_im.permute(1, 2, 0))
-    # ax.set_title('New Image')
     
-    # ax = fig.add_subplot(3, 2, 6)
-    # imgplot = plt.imshow(onehot_to_rgb(segmentation, color_dict).permute(1, 2, 0))
-    # ax.set_title('New Seg')
-    
-    
-
-    # plt.show()
+    sample = SMCCars[1]
+    img = TF.normalize(sample['image'].float(), mean=([79.2499, 76.9359, 70.4941]), std=([43.6275, 41.8426, 42.0789]))
+    #plt.imshow(sample['image'].permute(1, 2, 0))
+    plt.imshow(img.permute(1, 2, 0))
+        
