@@ -47,7 +47,7 @@ class SMCCarsDataset(Dataset):
     def __len__(self):
         return len(self.image_list)
 
-    def __getitem__(self, idx, transform=True):
+    def __getitem__(self, idx, transform=False):
         """ The indexing method for this object. If you have an instance of this object you can 
         do instance[0] to get the first data sample, for example. 
         :return: a tuple of pytorch tensors-- the image and its segmentation map

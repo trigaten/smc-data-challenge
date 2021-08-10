@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # for creating a Pytorch Dataset object
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, DataLoader
 
 # to make import from one dir up possible
 import sys
@@ -29,19 +29,20 @@ rootdir = '../SMC21_GM_AV'
 
 # instantiate an instance of the Dataset object
 SMCCars = SMCCarsDataset.SMCCarsDataset(rootdir)
-
+dataloader = DataLoader(SMCCars, batch_size=1, shuffle = True)
 # print len of dataset-- how many samples
-print(len(SMCCars))
 
 # get the first data sample
-sample = SMCCars[0]
+batch = next(iter(dataloader))
+# get ordered list of images in batch
+images = batch['image']
+# get ordered list of segmentations in batch
+segs = batch['segmentation']
 
 # extract the image and its segmentation
-image = (sample['image'])
-segmentation = (sample['segmentation'])
+image = images[0]
 
 print(image)
-print(segmentation.shape)
 
 
 write_png(image, "FFF.png")
