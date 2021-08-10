@@ -40,8 +40,8 @@ segs = batch['segmentation']
 
 # extract the image and its segmentation
 image = images[0]
+seg = segs[0]
 
-print(image)
+write_png(image, "img.png")
 
-
-write_png(image, "FFF.png")
+write_png(seg, "seg.png")
