@@ -1,6 +1,5 @@
 """
-A code example that implements the SMCCardsDataset object, indexes it for 
-a sample, and displays the sample with its segmentation map.
+A code example that saves an image obtained by a dataloader
 """
 
 __author__ = "Sander Schulhoff"

@@ -60,7 +60,7 @@ red, green, blue = random_content_seg
 
 repl_areas = (red == r) & (green == g) & (blue == b)
 
-print(new_sample_seg)
+# print(new_sample_seg)
 # print(new_sample_seg[0].shape)
 new_sample_seg[0][repl_areas], new_sample_seg[1][repl_areas], new_sample_seg[2][repl_areas] = [r, g, b]
 
@@ -68,7 +68,6 @@ new_image = torch.clone(sample['image'])
 new_image = new_image.detach().numpy()
 
 new_image[0][repl_areas], new_image[1][repl_areas], new_image[2][repl_areas] = random_content_img[0][repl_areas], random_content_img[1][repl_areas], random_content_img[2][repl_areas]
-
 
 new_sample_seg = torch.ByteTensor(new_sample_seg)
 new_image = torch.ByteTensor(new_image)
@@ -98,7 +97,7 @@ ax.set_title('New Image')
 
 ax = fig.add_subplot(3, 2, 6)
 
-imgplot = plt.imshow(onehot_to_rgb(new_sample_seg).permute(1, 2, 0))
+imgplot = plt.imshow(new_sample_seg.permute(1, 2, 0))
 ax.set_title('New Seg')
 
 plt.show()
