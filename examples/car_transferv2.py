@@ -1,7 +1,7 @@
 
 import matplotlib.pyplot as plt
 import torch
-
+import numpy as np
 # to make import from one dir up possible
 import sys
 sys.path.append("..") 
@@ -13,29 +13,66 @@ import SMCCarsDataset
 from SMCCarsDataset import rgb_to_onehot 
 from SMCCarsDataset import onehot_to_rgb 
 
+color_dict = {0: (70, 70, 70), # Building
+              1: (190, 153, 153), # Fence
+              2: (153, 153, 153), # Pole
+			  3: (244, 35, 232), # Sidewalk
+			  4: (107, 142, 35), # Vegetation
+			  5: (102, 102, 156), # Wall 
+			  6: (128, 64, 128), # Road / road line
+			  7: (220, 220, 0), # Traffic light / sign
+			  8: (220, 20, 60), # Person / rider
+			  9: (0, 0, 142), # Car
+			  10: (0, 0, 70), # Truck
+			  11: (0, 60, 100), # Bus
+			  12: (0, 80, 100), # Train
+			  13: (119, 11, 32), # Motorcycle / Bicycle
+			  14: (0, 0, 0), # Anything else
+			  }
+
 rootdir = '../SMC21_GM_AV'
 
 # instantiate an instance of the Dataset object
 SMCCars = SMCCarsDataset.SMCCarsDataset(rootdir)
 
-sample = SMCCars[0]
+sample = SMCCars[10]
 
 new_sample_seg = torch.clone(sample['segmentation'])
-new_sample_seg = rgb_to_onehot(new_sample_seg)
+new_sample_seg = new_sample_seg.detach().numpy()
 
 # get a random sample
 random_content_sample = SMCCars[20]#[random.randint(0, len(SMCCars)-1)]
 
 random_content_seg = random_content_sample['segmentation']
-random_content_seg = rgb_to_onehot(random_content_seg)
+random_content_seg = random_content_seg.detach().numpy()
+
+random_content_img = random_content_sample['image']
+random_content_img = random_content_img.detach().numpy()
 
 # pick a random channel index to swap
 index = 9 #random.randint(0, new_sample_seg.size()[0]-1)
+# color_dict
 
-# add the channel to sample
-new_sample_seg[index] = torch.max(new_sample_seg[index], random_content_seg[index]) 
+# get colors to copy
+r, g, b = color_dict[index]
 
-new_image = torch.where(random_content_seg[index] > 0, random_content_sample['image'], sample['image'])
+red, green, blue = random_content_seg
+
+repl_areas = (red == r) & (green == g) & (blue == b)
+
+print(new_sample_seg)
+# print(new_sample_seg[0].shape)
+new_sample_seg[0][repl_areas], new_sample_seg[1][repl_areas], new_sample_seg[2][repl_areas] = [r, g, b]
+
+new_image = torch.clone(sample['image'])
+new_image = new_image.detach().numpy()
+
+new_image[0][repl_areas], new_image[1][repl_areas], new_image[2][repl_areas] = random_content_img[0][repl_areas], random_content_img[1][repl_areas], random_content_img[2][repl_areas]
+
+
+new_sample_seg = torch.ByteTensor(new_sample_seg)
+new_image = torch.ByteTensor(new_image)
+random_content_seg = torch.ByteTensor(random_content_seg)
 
 fig = plt.figure(figsize=(8, 8))
 # exit()
