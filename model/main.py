@@ -1,13 +1,13 @@
 # File: main.py
 # Author: Gerson Kroiz
 # Description: uses model from model.py and
-# creates train/test data, trains model, and creates
-# gt and pred directories for evaluation
+# creates train/test data, trains model
 
 import matplotlib.pyplot as plt
 import numpy as np
 import os
 import GPUtil
+
 # to make import from one dir up
 import sys
 sys.path.append("..") 
@@ -40,6 +40,7 @@ from torch.distributed import Backend
 import argparse
 
 
+
 #basic training function
 def training(rank, numEpochs, dataLoader, model, opt, loss_func, save_model_loc):
     print('in training')
@@ -47,9 +48,10 @@ def training(rank, numEpochs, dataLoader, model, opt, loss_func, save_model_loc)
     for epoch in range(numEpochs):
         startEpoch = time.time()
         dataLoader.sampler.set_epoch(epoch)
-    
+        epochLoss = 0.0
+        numBatches = 0
         for (batch_idx, batch) in enumerate(dataLoader):
-
+            numBatches += 1
             #define input and labels
             inputs = batch['image']
             labels = batch['segmentation']
@@ -65,71 +67,43 @@ def training(rank, numEpochs, dataLoader, model, opt, loss_func, save_model_loc)
             if batch_idx == 0 and epoch == 0 and rank == 0:
                 print(summary(model, input_size=(3, 1280, 720)))
             #output from model
-
-            # if rank == 0:
-                # print('after model summary: ')
-                # GPUtil.showUtilization()
             out = model(inputs)
-            # if rank == 0:
-                # print('after model usage: ')
-                # GPUtil.showUtilization()
             #calculate loss
             # loss = loss_func(torch.sigmoid(out), torch.sigmoid(labels))
 
             # out = out.long()
             # labels = labels.long()
             # out = out.cuda()
-            labels = torch.cuda.LongTensor(labels)#.long().to(device)
+            # labels = torch.cuda.LongTensor(labels)#.long().to(device)
             loss = loss_func(out, labels)
-
+            print('rank: ' + str(rank) + ', after batch idx: ' + str(batch_idx) + ', after loss1: ' + str(loss))
             # Backward
             opt.zero_grad()
             loss.backward()
+            epochLoss += loss.item() * batchSize
+            # print('rank: ' + str(rank) + ', after batch idx: ' + str(batch_idx) + ', after loss2: ' + str(loss))
+
             opt.step()
+
         endEpoch = time.time()
-        print(f"\nEpoch: {epoch}/{numEpochs}, Loss: {loss}, 'Time: {endEpoch-startEpoch}")
-    torch.save(model.state_dict(), save_model_loc)
-    print("saved model")
+        if rank == 0:
+            print('Epoch: '+str(epoch)+'/'+str(numEpochs)+', Loss: '+str(epochLoss)+', Avg Loss: '+str(epochLoss /numBatches)+', Time: '+str(endEpoch-startEpoch))
+    if rank == 0:
+        print('before saved model')
+        torch.save(model.state_dict(), save_model_loc)
+        print("saved model")
+    print('rank: ' + str(rank) + ', training done')
 
-
-#function for evaluating model
-def predictions(dataLoader, model, batchSize):
-
-    #convert model to eval mode
-    model = model.eval()
-
-    #create gt and pred directories
-
-    if not os.path.isdir('results'):
-        os.mkdir('results')
-    os.chdir('results')
-    if not os.path.isdir('gt'):
-        os.mkdir('gt')
-    if not os.path.isdir('pred'):
-        os.mkdir('pred')
-
-    #do predictions based on batch size
-    for (batch_idx, batch) in enumerate(dataLoader):
-        inputs = batch['image']
-        labels = batch['segmentation']
-        inputs = inputs.to(device)
-        labels = labels.to(device)
-        predictions = model(inputs)
-
-        #save predictions and ground truth in respective directories
-        for index in range(batchSize):
-            save_image(predictions[index], 'pred/image' + str(batch_idx * batchSize + index) + '.png')
-            save_image(labels[index], 'gt/image' + str(batch_idx * batchSize + index) + '.png')
-
-        
-def create_data_loaders(rank, world_size, batchSize):
+def create_data_loaders(rootdir, rank, world_size, batchSize):
     SMCCars = SMCCarsDataset.SMCCarsDataset(rootdir)
-    train_data, test_data = torch.utils.data.random_split(SMCCars, [int(np.ceil(SMCCars.__len__()*0.8)), int(np.floor(SMCCars.__len__()*0.2))], generator=torch.Generator())
-    trainDataSampler = DistributedSampler(train_data, num_replicas = world_size, rank=rank, seed = 99)
-    testDataSampler = DistributedSampler(train_data, num_replicas = world_size, rank=rank, seed = 99)
 
-    trainDataLoader = DataLoader(train_data, batch_size = batchSize, shuffle = False, sampler = trainDataSampler, pin_memory=True)
-    testDataLoader = DataLoader(test_data, batch_size = batchSize, shuffle = False, sampler = testDataSampler, pin_memory=True)
+    torch.manual_seed(99)
+    train_data, test_data = torch.utils.data.random_split(SMCCars, [int(np.ceil(SMCCars.__len__()*0.8)), int(np.floor(SMCCars.__len__()*0.2))], generator=torch.Generator())
+    trainDataSampler = DistributedSampler(train_data, num_replicas = world_size, rank=rank, shuffle=False, seed = 99)
+    testDataSampler = DistributedSampler(test_data, num_replicas = world_size, rank=rank, shuffle=False, seed = 99)
+
+    trainDataLoader = DataLoader(train_data, batch_size = batchSize, sampler = trainDataSampler, pin_memory=True)
+    testDataLoader = DataLoader(test_data, batch_size = batchSize, sampler = testDataSampler, pin_memory=True)
 
     return trainDataLoader, testDataLoader
 
@@ -140,45 +114,12 @@ def create_model(rank):
     model = UNet()
     model = model.to(device)
     model = DDP(model, device_ids=[rank], output_device=rank)
-    opt = torch.optim.Adam(model.parameters())
+
+    #new change lr=0.001
+    opt = torch.optim.Adam(model.parameters(), lr=1e-3)
     loss_func = nn.CrossEntropyLoss()
     return model, opt, loss_func
 
-# def main(worldSize, rank, numEpochs, batchSize):
-
-#     device = torch.device(f'cuda:{rank}')
-#     model = UNet().to(device)
-#     #ONLY DO IF YOU ARE USING MULTIPLE GPUs!
-#     model = torch.nn.DataParallel(model, device_ids=list(range(torch.cuda.device_count())))
-#     # print('memory used: ' + str(torch.cuda.memory_allocated()) + '/' + str(torch.cuda.max_memory_allocated()))
-
-#     #optimizer
-#     opt = torch.optim.Adam(model.parameters())
-
-#     #binary cross entropy loss function
-#     # loss_func = nn.BCELoss()
-
-#     #cross entropy loss function
-#     loss_func = nn.CrossEntropyLoss().to(device)
-
-#     #load data
-#     # SMCCars = SMCCarsDataset.SMCCarsDataset(rootdir)
-#     # sample = SMCCars[2193]
-#     #number of epochs & batch size
-#     numEpochs = 25
-#     batchSize = 1
-
-#     kwargs = {'num_workers': 1, 'pin_memory': True} if device == torch.device('cuda') else {}
-
-#     #create random 80/20 split for train/test
-
-#     #in case you want to load in model, there is a better way to do this (i.e., save train and test data locallys)
-#     # torch.manual_seed(99)
-
-#     # trainDataLoader = DataLoader(train_data, batch_size = batchSize, shuffle = True, **kwargs)
-#     # testDataLoader = DataLoader(test_data, batch_size = batchSize, shuffle = True, **kwargs)
-
-#     return model, batchSize, numEpochs
 
 if __name__ == "__main__":
 
@@ -186,10 +127,11 @@ if __name__ == "__main__":
 
     #load data
     rootdir = '/raid/gkroiz1/SMC21_GM_AV'
-    rootdir = '/raid/gkroiz1/SMC21_GM_AV_w_style'
+    # rootdir = '/raid/gkroiz1/SMC21_GM_AV_w_style'
     save_model_loc = 'default-model.pt'
-
-    save_model_loc = 'style-model.pt'
+    # save_model_loc = 'style-model.pt'
+    numEpochs = 100
+    batchSize = 5
 
 
 
@@ -201,19 +143,10 @@ if __name__ == "__main__":
 
     print('number of cuda devices: ' + str(n_gpus))
 
-    #########################################################
-    # world_size = n_gpus                                      #
-    # os.environ['MASTER_ADDR'] = '10.57.23.164'              #
-    # os.environ['MASTER_PORT'] = '8888'                      #
-    # mp.spawn(training, nprocs=n_gpus)         #
-    #########################################################
-
     parser = argparse.ArgumentParser()
     parser.add_argument("--local_rank", type=int)
     args = parser.parse_args()
 
-    numEpochs = 100
-    batchSize = 5
 
     rank = args.local_rank
     print('rank: ' + str(rank))
@@ -223,7 +156,7 @@ if __name__ == "__main__":
     torch.distributed.init_process_group(backend=Backend.NCCL,
                                          init_method='env://')
 
-    trainDataLoader, testDataLoader = create_data_loaders(rank, worldSize, batchSize)
+    trainDataLoader, testDataLoader = create_data_loaders(rootdir, rank, worldSize, batchSize)
     if rank == 0:
         print('after creating dataLoaders: ')
         GPUtil.showUtilization()
@@ -235,16 +168,6 @@ if __name__ == "__main__":
 
     #call training function
     training(rank, numEpochs, trainDataLoader, model, opt, loss_func, save_model_loc)
-
-    #load previously trained model
-    # model = UNet()
-    #ONLY DO IF YOU ARE USING MULTIPLE GPUs!
-    # model = torch.nn.DataParallel(model, device_ids=list(range(torch.cuda.device_count())))
-    # model.load_state_dict(torch.load('model.pt'))
-    # model.to(device)
-
-    #call testing function
-    # predictions(testDataLoader, model, batchSize)
 
 
 
