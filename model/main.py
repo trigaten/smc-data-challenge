@@ -39,10 +39,34 @@ import torch.multiprocessing as mp
 from torch.distributed import Backend
 import argparse
 
+from PIL import Image
+import torchvision.transforms.functional as TF
+from torchvision.transforms import InterpolationMode
+import torchvision.transforms as transforms
 
+loader = transforms.Compose([
+    # transforms.Resize((720, 1280), InterpolationMode.NEAREST),  # scale imported image
+    transforms.ToTensor()])
+
+def image_loader(image_name):
+    image = Image.open(image_name).convert('RGB')
+    image = loader(image)
+
+    if (image.shape[1] == 1024):
+        i, j, h, w = transforms.RandomCrop.get_params(image, output_size=(1024, 1820))
+        image = TF.crop(image, i, j, h, w)
+        # NEAREST Interpolation so that segmap is logically interpolated
+        resize = transforms.Resize((720, 1280), InterpolationMode.NEAREST)
+        image = resize(image)
+
+    # fake batch dimension required to fit network's input dimensions
+    image = image.unsqueeze(0)
+
+    # image = loader(image).unsqueeze(0)
+    return image.to(device, torch.float)
 
 #basic training function
-def training(rank, numEpochs, dataLoader, model, opt, loss_func, save_model_loc):
+def training(rank, numEpochs, batchSize, dataLoader, model, opt, loss_func, save_model_loc):
     print('in training')
     model.train()
     for epoch in range(numEpochs):
@@ -54,10 +78,13 @@ def training(rank, numEpochs, dataLoader, model, opt, loss_func, save_model_loc)
             numBatches += 1
             #define input and labels
             inputs = batch['image']
+            # image = image.float()
+            # segmentation = segmentation.float()
+
             labels = batch['segmentation']
             
             #put inputs and labels on gpu if permitted
-            inputs = inputs.to(device)
+            inputs = inputs.to(device, dtype=torch.float)
 
             labels = labels.squeeze(axis=1)
             labels = labels.to(device, dtype=torch.int64)
@@ -76,7 +103,7 @@ def training(rank, numEpochs, dataLoader, model, opt, loss_func, save_model_loc)
             # out = out.cuda()
             # labels = torch.cuda.LongTensor(labels)#.long().to(device)
             loss = loss_func(out, labels)
-            print('rank: ' + str(rank) + ', after batch idx: ' + str(batch_idx) + ', after loss1: ' + str(loss))
+            # print('rank: ' + str(rank) + ', after batch idx: ' + str(batch_idx) + ', after loss1: ' + str(loss))
             # Backward
             opt.zero_grad()
             loss.backward()
@@ -87,7 +114,7 @@ def training(rank, numEpochs, dataLoader, model, opt, loss_func, save_model_loc)
 
         endEpoch = time.time()
         if rank == 0:
-            print('Epoch: '+str(epoch)+'/'+str(numEpochs)+', Loss: '+str(epochLoss)+', Avg Loss: '+str(epochLoss /numBatches)+', Time: '+str(endEpoch-startEpoch))
+            print('Epoch: '+str(epoch)+'/'+str(numEpochs)+', Loss: '+str(epochLoss)+', Avg Loss: '+str(epochLoss /(numBatches * batchSize))+', Time: '+str(endEpoch-startEpoch))
     if rank == 0:
         print('before saved model')
         torch.save(model.state_dict(), save_model_loc)
@@ -130,7 +157,7 @@ if __name__ == "__main__":
     # rootdir = '/raid/gkroiz1/SMC21_GM_AV_w_style'
     save_model_loc = 'default-model.pt'
     # save_model_loc = 'style-model.pt'
-    numEpochs = 100
+    numEpochs = 25
     batchSize = 5
 
 
@@ -167,7 +194,7 @@ if __name__ == "__main__":
         GPUtil.showUtilization()
 
     #call training function
-    training(rank, numEpochs, trainDataLoader, model, opt, loss_func, save_model_loc)
+    training(rank, numEpochs, batchSize, trainDataLoader, model, opt, loss_func, save_model_loc)
 
 
 

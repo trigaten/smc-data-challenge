@@ -74,9 +74,6 @@ class SMCCarsDataset(Dataset):
             image = torch.split(image, len(image)-1, 0)[0]
         if segmentation.shape[0] == 4:
             segmentation = torch.split(segmentation, len(segmentation)-1, 0)[0]
-        
-
-
 
         image, segmentation = self.resize(image, segmentation)
 
@@ -84,9 +81,6 @@ class SMCCarsDataset(Dataset):
             image, segmentation = self.transform(image, segmentation)
 
         segmentation = rgb_to_single(segmentation, color_dict)
-
-        # segmentation = segmentation.float()
-        image = image.float()
 
         sample = {'image': image, 'segmentation': segmentation}
 
