@@ -24,7 +24,7 @@ import SMCCarsDataset
 
 rootdir = '../SMC21_GM_AV'
 
-SMCCars = SMCCarsDataset.SMCCarsDataset(rootdir)
+SMCCars = SMCCarsDataset.SMCCarsDataset(rootdir, traditional_transform = True, overlay_transform=True)
 # print(len(SMCCarsDataset))
 dataloader = DataLoader(SMCCars, batch_size=3, shuffle = True)
 
@@ -42,6 +42,10 @@ fig = plt.figure(figsize=(8, 8))
 # display first 3 images and segmentations of the batch
 for index, image in enumerate(images):
     seg = segs[index]
+
+    seg = seg.byte()
+    image = image.byte() 
+
     image = image.permute(1, 2, 0)
     seg = seg.permute(1, 2, 0)
 

@@ -10,8 +10,6 @@ import random
 
 # import the custom Dataset object
 import SMCCarsDataset
-from SMCCarsDataset import rgb_to_onehot 
-from SMCCarsDataset import onehot_to_rgb 
 
 color_dict = {0: (70, 70, 70), # Building
               1: (190, 153, 153), # Fence
@@ -35,13 +33,14 @@ rootdir = '../SMC21_GM_AV'
 # instantiate an instance of the Dataset object
 SMCCars = SMCCarsDataset.SMCCarsDataset(rootdir)
 
-sample = SMCCars[10]
+sample = SMCCars[370]
 
 new_sample_seg = torch.clone(sample['segmentation'])
-new_sample_seg = new_sample_seg.detach().numpy()
+print(new_sample_seg.type())
 
+new_sample_seg = new_sample_seg.detach().numpy()
 # get a random sample
-random_content_sample = SMCCars[20]#[random.randint(0, len(SMCCars)-1)]
+random_content_sample = SMCCars[104]
 
 random_content_seg = random_content_sample['segmentation']
 random_content_seg = random_content_seg.detach().numpy()
@@ -50,8 +49,7 @@ random_content_img = random_content_sample['image']
 random_content_img = random_content_img.detach().numpy()
 
 # pick a random channel index to swap
-index = 9 #random.randint(0, new_sample_seg.size()[0]-1)
-# color_dict
+index = 6#random.randint(0, len(color_dict)-1)
 
 # get colors to copy
 r, g, b = color_dict[index]
@@ -60,35 +58,33 @@ red, green, blue = random_content_seg
 
 repl_areas = (red == r) & (green == g) & (blue == b)
 
-# print(new_sample_seg)
-# print(new_sample_seg[0].shape)
 new_sample_seg[0][repl_areas], new_sample_seg[1][repl_areas], new_sample_seg[2][repl_areas] = [r, g, b]
 
 new_image = torch.clone(sample['image'])
 new_image = new_image.detach().numpy()
 
 new_image[0][repl_areas], new_image[1][repl_areas], new_image[2][repl_areas] = random_content_img[0][repl_areas], random_content_img[1][repl_areas], random_content_img[2][repl_areas]
-
 new_sample_seg = torch.ByteTensor(new_sample_seg)
+print(new_image)
 new_image = torch.ByteTensor(new_image)
 random_content_seg = torch.ByteTensor(random_content_seg)
 
 fig = plt.figure(figsize=(8, 8))
 # exit()
 ax = fig.add_subplot(3, 2, 1)
-imgplot = plt.imshow(sample['image'].permute(1, 2, 0))
+imgplot = plt.imshow(sample['image'].byte().permute(1, 2, 0))
 ax.set_title('First image')
 
 ax = fig.add_subplot(3, 2, 2)
-imgplot = plt.imshow(sample['segmentation'].permute(1, 2, 0))
+imgplot = plt.imshow(sample['segmentation'].byte().permute(1, 2, 0))
 ax.set_title('First seg')
 
 ax = fig.add_subplot(3, 2, 3)
-imgplot = plt.imshow(random_content_sample['image'].permute(1, 2, 0))
+imgplot = plt.imshow(random_content_sample['image'].byte().permute(1, 2, 0))
 ax.set_title('Second image')
 
 ax = fig.add_subplot(3, 2, 4)
-imgplot = plt.imshow(random_content_sample['segmentation'].permute(1, 2, 0))
+imgplot = plt.imshow(random_content_sample['segmentation'].byte().permute(1, 2, 0))
 ax.set_title('Second seg')
 
 ax = fig.add_subplot(3, 2, 5)

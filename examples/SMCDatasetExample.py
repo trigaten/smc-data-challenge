@@ -27,7 +27,7 @@ import SMCCarsDataset
 rootdir = '../SMC21_GM_AV'
 
 # instantiate an instance of the Dataset object
-SMCCars = SMCCarsDataset.SMCCarsDataset(rootdir)
+SMCCars = SMCCarsDataset.SMCCarsDataset(rootdir, traditional_transform=True)
 
 # print len of dataset-- how many samples
 print(len(SMCCars))

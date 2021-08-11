@@ -1,7 +1,9 @@
 """ Dataset object for the car images adapted from 
 https://pytorch.org/tutorials/beginner/data_loading_tutorial.html. This class 
 extends Pytorch's Dataset class and makes the image data easily accessible.
-Note: indexing is supported, but slicing is currently not.
+To use styled dataset just put the folder in your root_dir that you pass to
+this object
+
     """
 
 __author__ = "Sander Schulhoff"
@@ -17,26 +19,40 @@ from torch.utils.data import Dataset
 import numpy as np
 from matplotlib import pyplot as plt
 
+color_dict = {0: (70, 70, 70), # Building
+              1: (190, 153, 153), # Fence
+              2: (153, 153, 153), # Pole
+			  3: (244, 35, 232), # Sidewalk
+			  4: (107, 142, 35), # Vegetation
+			  5: (102, 102, 156), # Wall 
+			  6: (128, 64, 128), # Road / road line
+			  7: (220, 220, 0), # Traffic light / sign
+			  8: (220, 20, 60), # Person / rider
+			  9: (0, 0, 142), # Car
+			  10: (0, 0, 70), # Truck
+			  11: (0, 60, 100), # Bus
+			  12: (0, 80, 100), # Train
+			  13: (119, 11, 32), # Motorcycle / Bicycle
+			  14: (0, 0, 0), # Anything else
+			  }
+
 class SMCCarsDataset(Dataset):
-    def __init__(self, root_dir, traditionalTransform=False, styleTransform=False, overlayTransform=False):
+    def __init__(self, root_dir, traditional_transform=False, overlay_transform=True):
         """
         Args:
             root_dir (string): Directory with all the images 
                 and their segmentations (the SMC21_GM_AV folder)
-            traditionalTransform (callable, optional): Optional transform to be applied
+            traditional_transform (callable, optional): Optional transform to be applied
                 on a sample.
-            styleTransform (callable, optional): Optional transform to be applied
-                on a sample.
-            overlayTransform (callable, optional): Optional transform to be applied
+            overlay_transform (callable, optional): Optional transform to be applied
                 on a sample.
         """
         # a list containing the path of every image
         self.image_list, self.seg_list = self.get_image_seg_list(root_dir)
         self.root_dir = root_dir
 
-        self.traditionalTransform = traditionalTransform
-        self.styleTransform = styleTransform
-        self.overlayTransform = overlayTransform
+        self.traditional_transform = traditional_transform
+        self.overlay_transform = overlay_transform
 
         self.leastWidth = 1280
         self.leastHeight = 720
@@ -47,16 +63,18 @@ class SMCCarsDataset(Dataset):
     def __len__(self):
         return len(self.image_list)
 
-    def __getitem__(self, idx, transform=False):
+    def __getitem__(self, idx, for_overlay=False):
         """ The indexing method for this object. If you have an instance of this object you can 
         do instance[0] to get the first data sample, for example. 
         :return: a tuple of pytorch tensors-- the image and its segmentation map
         """
+        print(idx)
         if torch.is_tensor(idx):
             idx = idx.tolist()
 
         # convert path to image/seg to image/seg itself
         img_path = self.image_list[idx]
+        print(img_path)
         seg_path = self.seg_list[idx]
         # check that image is not corrupt
         try:
@@ -65,9 +83,6 @@ class SMCCarsDataset(Dataset):
             raise Exception("Unable to read image at " + img_path + ". Verify that it is not corrupted")
         segmentation = IO.read_image(seg_path)
 
-        #image = image.float()
-        #segmentation = segmentation.float()
-        
         # remove the alpha channels
         # test if alpha channel exists-- not all pngs have alpha channel
         if image.shape[0] == 4:
@@ -76,13 +91,15 @@ class SMCCarsDataset(Dataset):
             segmentation = torch.split(segmentation, len(segmentation)-1, 0)[0]
         
         image, segmentation = self.resize(image, segmentation)
-
-        if self.traditionalTransform and transform:
+        
+        if self.traditional_transform:
             image, segmentation = self.transform(image, segmentation)
 
-        if self.overlayTransform and transform:
-            if idx == 1:
-                image, segmentation = self.overlay(image, segmentation)
+        image = image.float()
+        segmentation = segmentation.float()
+
+        if self.overlay_transform and not for_overlay:
+            image, segmentation = self.overlay(image, segmentation)
 
         sample = {'image': image, 'segmentation': segmentation}
 
@@ -90,8 +107,6 @@ class SMCCarsDataset(Dataset):
 
     def transform(self, img, seg):
         # To PIL
-        image = TF.to_pil_image(img)
-        segmentation = TF.to_pil_image(seg)
 
         """
         # Random Crop
@@ -100,41 +115,55 @@ class SMCCarsDataset(Dataset):
         image = TF.crop(image, i, j, h, w)
         segmentation = TF.crop(segmentation, i, j, h, w)
         """
-
+        
         # Random Flip
         if random.random() > 0.5:
-            image = TF.hflip(image)
-            segmentation = TF.hflip(segmentation)
-
+            img = TF.hflip(img)
+            seg = TF.hflip(seg)
+        # img = img.to(torch.float)
         # Jitters colors
         jitter = transforms.ColorJitter(brightness=0.5, hue=0.5, contrast=0.5, saturation=0.5)
-        image = jitter(image)
-
-        # To Tensor
-        image = TF.to_tensor(image)
-        segmentation = TF.to_tensor(segmentation)
-
+        img = jitter(img)
+        
         # Normalize
-        image = TF.normalize(image, mean=([79.2499, 76.9359, 70.4941]), std=([43.6275, 41.8426, 42.0789]))
-
-        return image, segmentation
+        # img = TF.normalize(img, mean=([0.310783, 0.301709, 0.276447]), std=([0.171088, 0.164088, 0.165015]), inplace=True)
+        # img = img.to(torch.uint8)
+        return img, seg
     
     def overlay(self, img, seg):
-        #converts original segmentations to onehot (base)
-        original_sample_seg = torch.clone(seg)
-        original_sample_seg = rgb_to_onehot(original_sample_seg, color_dict)
-        
+        # 50% chance of applying the transform
+        if random.random() > 0.5:
+            return img, seg
         #randomly selects new image to extract segmentation from
-        #transform=False prevents code from entering infinite loop
-        random_sample = self.__getitem__(random.randint(0, self.__len__()-1), transform=False)
+        #for_overlay=True prevents code from entering infinite loop
+        new_sample_seg = seg
+        new_sample_seg = new_sample_seg.detach().numpy()
+
+        random_content_sample = self.__getitem__(random.randint(0, len(self)-1), for_overlay=True)
         
-        index = random.randint(0, original_sample_seg.size()[0]-1)
+        random_content_seg = random_content_sample['segmentation']
+        random_content_seg = random_content_seg.detach().numpy()
+
+        random_content_img = random_content_sample['image']
+        random_content_img = random_content_img.detach().numpy()
+        index = random.randint(0, len(color_dict)-1)
+
+        r, g, b = color_dict[index]
+
+        red, green, blue = random_content_seg
+
+        repl_areas = (red == r) & (green == g) & (blue == b)
+
+        new_sample_seg[0][repl_areas], new_sample_seg[1][repl_areas], new_sample_seg[2][repl_areas] = [r, g, b]
+
+        new_image = img
+        new_image = new_image.detach().numpy()
+
+        new_image[0][repl_areas], new_image[1][repl_areas], new_image[2][repl_areas] = random_content_img[0][repl_areas], random_content_img[1][repl_areas], random_content_img[2][repl_areas]
+        new_sample_seg = torch.ByteTensor(new_sample_seg)
+        new_image = torch.ByteTensor(new_image)
         
-        overlay_seg = rgb_to_onehot(random_sample['segmentation'], color_dict)
-        new_img = torch.where(overlay_seg[index]>0, random_sample['image'], img) 
-        new_seg = torch.where(overlay_seg[index]>0, overlay_seg, original_sample_seg)
-        
-        return new_img, new_seg
+        return new_image, new_sample_seg
     
     def resize(self, image, segmentation):
         if image.shape[1] == 1024:
@@ -175,23 +204,6 @@ class SMCCarsDataset(Dataset):
 
         return (images, segmentations)
 
-color_dict = {0: (70, 70, 70), # Building
-              1: (190, 153, 153), # Fence
-              2: (153, 153, 153), # Pole
-			  3: (244, 35, 232), # Sidewalk
-			  4: (107, 142, 35), # Vegetation
-			  5: (102, 102, 156), # Wall 
-			  6: (128, 64, 128), # Road / road line
-			  7: (220, 220, 0), # Traffic light / sign
-			  8: (220, 20, 60), # Person / rider
-			  9: (0, 0, 142), # Car
-			  10: (0, 0, 70), # Truck
-			  11: (0, 60, 100), # Bus
-			  12: (0, 80, 100), # Train
-			  13: (119, 11, 32), # Motorcycle / Bicycle
-			  14: (0, 0, 0), # Anything else
-			  }
-
 #convert from a numpy array from (3, y, x) -> (15, y, x)
 def rgb_to_onehot(segmentation, color_dict=color_dict):
     rgb_arr = segmentation.cpu().detach().numpy()
@@ -222,12 +234,13 @@ def onehot_to_rgb(segmentation, color_dict=color_dict):
     return output
 
 if __name__ == '__main__':
-    rootdir = 'smcdc_c3'
+    rootdir = 'SMC21_GM_AV'
     # instantiate an instance of the Dataset object
     SMCCars = SMCCarsDataset(rootdir)
     
     sample = SMCCars[1]
     img = TF.normalize(sample['image'].float(), mean=([79.2499, 76.9359, 70.4941]), std=([43.6275, 41.8426, 42.0789]))
+    print(img)
     #plt.imshow(sample['image'].permute(1, 2, 0))
     plt.imshow(img.permute(1, 2, 0))
         
