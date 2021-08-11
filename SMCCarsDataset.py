@@ -37,7 +37,7 @@ color_dict = {0: (70, 70, 70), # Building
 			  }
 
 class SMCCarsDataset(Dataset):
-    def __init__(self, root_dir, traditional_transform=False, overlay_transform=True):
+    def __init__(self, root_dir, traditional_transform=False, overlay_transform=False):
         """
         Args:
             root_dir (string): Directory with all the images 
