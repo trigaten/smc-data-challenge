@@ -68,13 +68,11 @@ class SMCCarsDataset(Dataset):
         do instance[0] to get the first data sample, for example. 
         :return: a tuple of pytorch tensors-- the image and its segmentation map
         """
-        print(idx)
         if torch.is_tensor(idx):
             idx = idx.tolist()
 
         # convert path to image/seg to image/seg itself
         img_path = self.image_list[idx]
-        print(img_path)
         seg_path = self.seg_list[idx]
         # check that image is not corrupt
         try:
@@ -95,8 +93,8 @@ class SMCCarsDataset(Dataset):
         if self.traditional_transform:
             image, segmentation = self.transform(image, segmentation)
 
-        image = image.float()
-        segmentation = segmentation.float()
+        # image = image.float()
+        # segmentation = segmentation.float()
 
         if self.overlay_transform and not for_overlay:
             image, segmentation = self.overlay(image, segmentation)
