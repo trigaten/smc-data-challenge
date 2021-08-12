@@ -36,7 +36,7 @@ color_dict = {0: (70, 70, 70), # Building
 			  14: (0, 0, 0), # Anything else
 			  }
 
-overlay_indices = [0, 2, 4, 5, 7, 8, 9, 10, 11, 12, 13]
+overlay_indices = [0, 2, 5, 7, 8, 9, 10, 11, 12, 13]
 
 class SMCCarsDataset(Dataset):
     def __init__(self, root_dir, traditional_transform=False, overlay_transform=False):
