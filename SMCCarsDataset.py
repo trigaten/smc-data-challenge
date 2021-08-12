@@ -2,12 +2,12 @@
 https://pytorch.org/tutorials/beginner/data_loading_tutorial.html. This class 
 extends Pytorch's Dataset class and makes the image data easily accessible.
 To use styled dataset just put the folder in your root_dir that you pass to
-this object
-
-    """
+this object """
 
 __author__ = "Sander Schulhoff"
 __email__ = "sanderschulhoff@gmail.com"
+__credits__ = ["Sander Schulhoff", "Joshua Anantharaj", "Gerson Kroiz",
+                    "Nick Drake"]
 
 import torch
 import random
@@ -36,6 +36,8 @@ color_dict = {0: (70, 70, 70), # Building
 			  14: (0, 0, 0), # Anything else
 			  }
 
+overlay_indices = [0, 2, 4, 5, 7, 8, 9, 10, 11, 12, 13]
+
 class SMCCarsDataset(Dataset):
     def __init__(self, root_dir, traditional_transform=False, overlay_transform=False):
         """
@@ -53,9 +55,6 @@ class SMCCarsDataset(Dataset):
 
         self.traditional_transform = traditional_transform
         self.overlay_transform = overlay_transform
-
-        self.leastWidth = 1280
-        self.leastHeight = 720
 
         self.resizeFactor = 0.75
         self.cropFactor = 0.5
@@ -93,39 +92,26 @@ class SMCCarsDataset(Dataset):
         if self.traditional_transform:
             image, segmentation = self.transform(image, segmentation)
 
-        # image = image.float()
-        # segmentation = segmentation.float()
-
         if self.overlay_transform and not for_overlay:
             image, segmentation = self.overlay(image, segmentation)
+
+        if not for_overlay:
+            segmentation = rgb_to_single(segmentation, color_dict)
 
         sample = {'image': image, 'segmentation': segmentation}
 
         return sample
 
     def transform(self, img, seg):
-        # To PIL
-
-        """
-        # Random Crop
-        i, j, h, w = transforms.RandomCrop.get_params(image, output_size=(
-            int(self.cropFactor * self.leastHeight), int(self.cropFactor * self.leastWidth)))
-        image = TF.crop(image, i, j, h, w)
-        segmentation = TF.crop(segmentation, i, j, h, w)
-        """
-        
         # Random Flip
         if random.random() > 0.5:
             img = TF.hflip(img)
             seg = TF.hflip(seg)
         # img = img.to(torch.float)
         # Jitters colors
-        jitter = transforms.ColorJitter(brightness=0.5, hue=0.5, contrast=0.5, saturation=0.5)
+        jitter = transforms.ColorJitter(brightness=0.1, hue=0.1, contrast=0.1, saturation=0.1)
         img = jitter(img)
-        
-        # Normalize
-        # img = TF.normalize(img, mean=([0.310783, 0.301709, 0.276447]), std=([0.171088, 0.164088, 0.165015]), inplace=True)
-        # img = img.to(torch.uint8)
+
         return img, seg
     
     def overlay(self, img, seg):
@@ -144,7 +130,7 @@ class SMCCarsDataset(Dataset):
 
         random_content_img = random_content_sample['image']
         random_content_img = random_content_img.detach().numpy()
-        index = random.randint(0, len(color_dict)-1)
+        index = random.choice(overlay_indices)
 
         r, g, b = color_dict[index]
 
@@ -189,7 +175,7 @@ class SMCCarsDataset(Dataset):
             images_path = os.path.join(image_type_path, "images")
             # append all image paths to the list
             for image_file in os.listdir(images_path):
-                # check for hidden .DS_STORE filess
+                # check for hidden .DS_STORE files
                 if image_file.find(".DS_Store") != -1:
                     continue
                 images.append(os.path.join(images_path, image_file))
@@ -217,7 +203,6 @@ def rgb_to_onehot(segmentation, color_dict=color_dict):
     arr = torch.from_numpy(arr)
     return arr
 
-
 #for converting from onehot to rgb: (15, y, x) -> (3, y, x)
 def onehot_to_rgb(segmentation, color_dict=color_dict):
     onehot = segmentation.cpu().detach().numpy()
@@ -230,6 +215,20 @@ def onehot_to_rgb(segmentation, color_dict=color_dict):
     output = np.transpose(output, (2, 0, 1))
     output = torch.from_numpy(output)
     return output
+
+#convert from a numpy array from (3, y, x) -> (1, y, x)
+def rgb_to_single(rgb_arr, color_dict):
+    rgb_arr = rgb_arr.cpu().detach().numpy()
+    rgb_arr = np.transpose(rgb_arr, (1, 2, 0))
+    num_classes = len(color_dict)
+    onehotshape = rgb_arr.shape[:2]+(num_classes,)
+    singlelayershape = rgb_arr.shape[:2]+(1,)
+    arr = np.zeros(singlelayershape, dtype=np.int8 )
+    for i, cls in enumerate(color_dict):
+        arr[:,:,0] += np.all(rgb_arr.reshape( (-1,3) ) == color_dict[i], axis=1).reshape(onehotshape[:2]) * i
+    arr = np.transpose(arr, (2, 0, 1))
+    arr = torch.from_numpy(arr)
+    return arr
 
 if __name__ == '__main__':
     rootdir = 'SMC21_GM_AV'
