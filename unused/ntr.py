@@ -39,7 +39,6 @@ for image_type_folder in os.listdir(root_dir):
         size = segmentation.size()
         for h in range(size[1]):
             for w in range(size[2]):
-                print("EE")
                 for test_against, convert_to in zip(against, to):
                     if segmentation[0][h][w] == test_against[0] and segmentation[1][h][w] == test_against[1] and segmentation[2][h][w] == test_against[2]:
                         segmentation[0][h][w] = convert_to[0]
