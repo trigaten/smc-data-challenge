@@ -1,5 +1,6 @@
 """
 A script which transfers part of an image onto another image
+Also saves all images as pngs
 """
 import matplotlib.pyplot as plt
 import torch
@@ -39,13 +40,13 @@ rootdir = '../SMC21_GM_AV'
 # instantiate an instance of the Dataset object
 SMCCars = SMCCarsDataset.SMCCarsDataset(rootdir, return_rgb=True)
 
-sample = SMCCars[370]
+sample = SMCCars[2521]
 
 new_sample_seg = torch.clone(sample['segmentation'])
 
 new_sample_seg = new_sample_seg.detach().numpy()
 # get a random sample
-random_content_sample = SMCCars[104]
+random_content_sample = SMCCars[1221]
 
 random_content_seg = random_content_sample['segmentation']
 random_content_seg = random_content_seg.detach().numpy()
