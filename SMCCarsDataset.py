@@ -39,7 +39,7 @@ color_dict = {0: (70, 70, 70), # Building
 overlay_indices = [0, 2, 5, 7, 8, 9, 10, 11, 12, 13]
 
 class SMCCarsDataset(Dataset):
-    def __init__(self, root_dir, traditional_transform=False, overlay_transform=False):
+    def __init__(self, root_dir, traditional_transform=False, overlay_transform=False, return_rgb=False):
         """
         Args:
             root_dir (string): Directory with all the images 
@@ -56,6 +56,7 @@ class SMCCarsDataset(Dataset):
         self.traditional_transform = traditional_transform
         self.overlay_transform = overlay_transform
 
+        self.return_rgb = return_rgb
         self.resizeFactor = 0.75
         self.cropFactor = 0.5
 
@@ -95,7 +96,7 @@ class SMCCarsDataset(Dataset):
         if self.overlay_transform and not for_overlay:
             image, segmentation = self.overlay(image, segmentation)
 
-        if not for_overlay:
+        if not for_overlay and not self.return_rgb:
             segmentation = rgb_to_single(segmentation, color_dict)
 
         sample = {'image': image, 'segmentation': segmentation}
