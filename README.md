@@ -1,6 +1,8 @@
 # Challenge 3 submission for smc data challenge
 Please follow the steps below to use this repository.
-* Step 1 Goes over what to install and how to preprocess the data before using the model.
+* Step 1 goes over what to install and how to preprocess the data before using the model.
+* Step 2 goes over training your own models using the provided data augmentation techniques.
+* Stpe 3 goes over creating predictions and runing evaluations.
 
 ## Step 1: 
 ### Step 1.1: Install conda environment dependencies
@@ -84,5 +86,5 @@ After Step 3.1, the evaluation (provided by the challenge hosts), can be execute
 where ```RESULTSDIR``` is the string location path of the results directory.
 
 ## Acknowledgements
-All of our results were computed via small GPU computer clusters provided by Oak Ridge National Laboratory. If you have any questions are concerns, please reach out to gkroiz1@umbc.edu or sanderschulhoff@gmail.com.
+All of our results were computed via small GPU computer clusters provided by Oak Ridge National Laboratory. If you have any questions are concerns, please reach out to any of use via the following emails: gkroiz1@umbc.edu, sanderschulhoff@gmail.com, joshua@utk.edu, or ndrake1@vols.utk.edu.
 
