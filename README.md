@@ -2,7 +2,9 @@
 Please follow the steps below to use this repository.
 * Step 1 goes over what to install and how to preprocess the data before using the model.
 * Step 2 goes over training your own models using the provided data augmentation techniques.
-* Stpe 3 goes over creating predictions and runing evaluations.
+* Step 3 goes over creating predictions and runing evaluations.
+
+Both Step 2 and 3 are located within the ```model``` directory.
 
 ## Step 1: 
 ### Step 1.1: Install conda environment dependencies
