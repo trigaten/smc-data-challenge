@@ -1,7 +1,8 @@
 #!/bin/bash
-# This script removes known corrupted images and their segmentations from the dataset
-# @author Sander Schulhoff
-# @email sanderschulhoff@gmail.com
+# Description   :This script removes known corrupted images and their 
+# segmentations from the dataset
+# Author    :Sander Schulhoff
+# Email     :sanderschulhoff@gmail.com
 
 # remove corrupt images
 rm SMC21_GM_AV/CloudyNoon/images/00000086.png
