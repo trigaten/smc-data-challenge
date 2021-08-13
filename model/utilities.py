@@ -1,3 +1,13 @@
+""" 
+Contains functions that are used by multiple files. This includes
+1) create_data_loader
+2) create_model
+"""
+
+__author__ = "Gerson Kroiz"
+__email__ = "gkroiz1@umbc.edu"
+
+
 from torch.utils.data import DataLoader
 from torch.utils.data import DistributedSampler
 
