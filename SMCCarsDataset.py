@@ -172,11 +172,14 @@ class SMCCarsDataset(Dataset):
         return new_image, new_sample_seg
     
     def resize(self, image, segmentation):
+        # Resize image if the image is larger than 1280x720
         if image.shape[1] == 1024:
+            # Random crop to correct aspect ratio
             i, j, h, w = transforms.RandomCrop.get_params(image, output_size=(1024, 1820))
             image = TF.crop(image, i, j, h, w)
             segmentation = TF.crop(segmentation, i, j, h, w)
             # NEAREST Interpolation so that segmap is logically interpolated
+            # Scale down to 1280x720
             resize = transforms.Resize((720, 1280), transforms.InterpolationMode.NEAREST)
             image = resize(image)
             segmentation = resize(segmentation)
