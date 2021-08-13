@@ -1,7 +1,7 @@
 """
+A script which counts the number of images of each size in the dataset
 NO LONGER WORKS properly due to all images in Dataset now being returned 
 as the same size.
-A script which counts the number of images of each size in the dataset:
 
 Result:
 {torch.Size([3, 720, 1280]): 4898, torch.Size([3, 1024, 2048]): 700}
