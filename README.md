@@ -88,5 +88,5 @@ After Step 3.1, the evaluation (provided by the challenge hosts), can be execute
 where ```RESULTSDIR``` is the string location path of the results directory.
 
 ## Acknowledgements
-All of our results were computed via small GPU computer clusters provided by Oak Ridge National Laboratory. If you have any questions are concerns, please reach out to any of use via the following emails: gkroiz1@umbc.edu, sanderschulhoff@gmail.com, joshua@utk.edu, or ndrake1@vols.utk.edu.
+All of our results were computed via small GPU computer clusters provided by Oak Ridge National Laboratory. If you have any questions are concerns, please reach out to any of us via the following emails: gkroiz1@umbc.edu, sanderschulhoff@gmail.com, joshua@utk.edu, or ndrake1@vols.utk.edu.
 
