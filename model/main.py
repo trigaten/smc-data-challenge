@@ -9,8 +9,6 @@ __email__ = "gkroiz1@umbc.edu"
 import matplotlib.pyplot as plt
 import os
 
-
-
 #import utilities
 import utilities
 
@@ -106,7 +104,7 @@ if __name__ == "__main__":
         json_params = loadf(inFile)
     #load json file information
     rootdir = json_params["rootdir"]
-    save_model_loc = json_params["save_model_loc"]
+    save_model_loc = json_params["saved_model_loc"]
     num_epochs = json_params["num_epochs"]
     batch_size = json_params["batch_size"]
 
@@ -132,7 +130,7 @@ if __name__ == "__main__":
     torch.distributed.init_process_group(backend=Backend.NCCL, init_method='env://')
 
     #define data loaders
-    trainDataLoader = utilities.create_data_loader(rootdir, rank, worldSize, batch_size)
+    trainDataLoader = utilities.create_data_loader(rootdir, rank, worldSize, batch_size, 'train')
 
 
     #define model, optimizer, and loss function
