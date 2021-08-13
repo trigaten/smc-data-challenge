@@ -1,4 +1,9 @@
-from __future__ import print_function
+"""
+Style transform code adapted from https://pytorch.org/tutorials/advanced/neural_style_tutorial.html.
+"""
+
+__author__ = "Gerson Kroiz"
+__email__ = "gkroiz1@umbc.edu"
 
 import torch
 import torch.nn as nn
@@ -24,41 +29,6 @@ sys.path.append("..")
 import SMCCarsDataset
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-# desired size of the output image
-# imsize = 512 if torch.cuda.is_available() else 128  # use small size if no gpu
-
-loader = transforms.Compose([
-    # transforms.Resize((720, 1280), InterpolationMode.NEAREST),  # scale imported image
-    transforms.ToTensor()])  # transform it into a torch tensor
-
-def image_loader(image_name):
-    image = Image.open(image_name).convert('RGB')
-    image = loader(image)
-    if (image.shape[1] == 1024):
-        i, j, h, w = transforms.RandomCrop.get_params(image, output_size=(1024, 1820))
-        image = TF.crop(image, i, j, h, w)
-        # NEAREST Interpolation so that segmap is logically interpolated
-        resize = transforms.Resize((720, 1280), InterpolationMode.NEAREST)
-        image = resize(image)
-
-    # fake batch dimension required to fit network's input dimensions
-    image = image.unsqueeze(0)
-
-    # image = loader(image).unsqueeze(0)
-    return image.to(device, torch.float)
-
-
-
-############################################################
-# style_img = read_image("/raid/gkroiz1/SMC21_GM_AV/ClearNoon/images/00000205.png")
-# content_img = read_image("/raid/gkroiz1/SMC21_GM_AV/CloudySunset/images/00000360.png")
-
-
-# style_img = image_loader('/raid/gkroiz1/SMC21_GM_AV/Cityscapes/images/00000219.png')
-# content_img = image_loader('/raid/gkroiz1/SMC21_GM_AV/CloudySunset/images/00000360.png')
-
-
 
 from skimage.color import rgba2rgb
 from skimage import data
@@ -189,21 +159,13 @@ def get_style_model_and_losses(cnn, normalization_mean, normalization_std,
 
     return model, style_losses, content_losses
 
-# input_img = content_img.clone()
-# if you want to use white noise instead uncomment the below line:
-# input_img = torch.randn(content_img.data.size(), device=device)
-
-# add the original input image to the figure:
-# plt.figure()
-# imshow(input_img, title='Input Image')
-
 def get_input_optimizer(input_img):
     # this line to show that input is a parameter that requires a gradient
     optimizer = optim.LBFGS([input_img.requires_grad_()])
     return optimizer
 
 def run_style_transfer(cnn, normalization_mean, normalization_std,
-                       content_img, style_img, input_img, num_steps=300,
+                       content_img, style_img, input_img, num_steps=150,
                        style_weight=1000000, content_weight=1):
     """Run the style transfer."""
     # print('Building the style transfer model..')
@@ -256,9 +218,8 @@ def run_style_transfer(cnn, normalization_mean, normalization_std,
 # based on https://pytorch.org/tutorials/advanced/neural_style_tutorial.html#introduction
 #inputs: cnn (network), content_image (content image), cityscapedir (directory where cityscape images are located)
 #output: output (resulting image with style transfer applied)
-def style_transfer(content_img, style_img):
-    cnn = models.vgg19(pretrained=True).features.to(device).eval()
-
+def style_transfer(cnn, content_img, style_img):
+    
     input_img = content_img.clone()
     cnn_normalization_mean = torch.tensor([0.485, 0.456, 0.406]).to(device)
     cnn_normalization_std = torch.tensor([0.229, 0.224, 0.225]).to(device)
@@ -278,11 +239,11 @@ def imshow(tensor, title=None):
         plt.title(title)
     plt.pause(0.001) # pause a bit so that plots are updated
 
-# if __name__ == '__main__':
-#     content_img = image_loader('/raid/gkroiz1/SMC21_GM_AV/CloudySunset/images/00000360.png')
-#     cityscapedir = '/raid/gkroiz1/SMC21_GM_AV/Cityscapes'
-#     cnn = models.vgg19(pretrained=True).features.to(device).eval()
-#     output = style_transfer(cnn, content_img, cityscapedir)
-#     plt.figure()
-#     imshow(output, title='Output Image')
-#     plt.savefig('output.png')
+if __name__ == '__main__':
+    content_img = image_loader('/raid/gkroiz1/SMC21_GM_AV/CloudySunset/images/00000360.png')
+    cityscapedir = '/raid/gkroiz1/SMC21_GM_AV/Cityscapes'
+    cnn = models.vgg19(pretrained=True).features.to(device).eval()
+    output = style_transfer(cnn, content_img, cityscapedir)
+    plt.figure()
+    imshow(output, title='Output Image')
+    plt.savefig('output.png')

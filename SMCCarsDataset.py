@@ -5,8 +5,8 @@ extends Pytorch's Dataset class and makes the image data easily accesible.
 Note: indexing is supported, but slicing is currently not.
     """
 
-__author__ = "Sander Schulhoff"
-__email__ = "sanderschulhoff@gmail.com"
+__authors__ = ["Gerson Kroiz", "Sander Schulhoff"]
+__email__ = "gkroiz1@umbc.edu"
 
 import torch
 import torchvision
@@ -51,29 +51,12 @@ class SMCCarsDataset(Dataset):
         if torch.is_tensor(idx):
             idx = idx.tolist()
 
-        # convert path to image/seg to image/seg itself
+        #return the paths for images and segmentations
         img_path = self.image_list[idx]
         seg_path = self.seg_list[idx]
-        # check that image is not corrupt
-        try:
-            image = read_image(img_path)
-        except Exception as e:
-            raise Exception("Unable to read image at " + img_path + ". Verify that it is not corrupted")
-        segmentation = read_image(seg_path)
 
-        image = image.float()
-        segmentation = segmentation.float()
-        
-        # remove the alpha channels
-        # test if alpha channel exists-- not all pngs have alpha channel
-        if (image.shape[0] == 4):
-            image = torch.split(image, len(image)-1, 0)[0]
-        if (segmentation.shape[0] == 4):
-            segmentation = torch.split(segmentation, len(segmentation)-1, 0)[0]
-        
-        image, segmentation = self.resize(image, segmentation)
 
-        sample = {'image': image, 'segmentation': segmentation}
+        sample = {'image': img_path, 'segmentation': seg_path}
 
         if self.transform:
             sample = self.transform(sample)
@@ -107,7 +90,6 @@ class SMCCarsDataset(Dataset):
             if not self.returnSynth:
                 if image_type_folder != "Cityscapes":
                     continue
-            print("YES")
             # get the path of the folder (like Cityscapes of ClearNoon)
             image_type_path = os.path.join(dir, image_type_folder)
 
