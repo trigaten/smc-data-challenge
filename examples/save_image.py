@@ -1,5 +1,5 @@
 """
-A code example that saves an image obtained by a dataloader
+A code example that saves an image and its seg map obtained from a dataloader
 """
 
 __author__ = "Sander Schulhoff"

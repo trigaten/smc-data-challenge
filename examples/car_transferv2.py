@@ -1,4 +1,6 @@
-
+"""
+A script which transfers part of an image onto another image
+"""
 import matplotlib.pyplot as plt
 import torch
 import numpy as np

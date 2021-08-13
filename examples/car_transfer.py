@@ -1,5 +1,6 @@
 """
 A script which transfers part of an image onto another image
+NO LONGER WORKS due to Dataset object changes
 """
 
 __author__ = "Sander Schulhoff"
