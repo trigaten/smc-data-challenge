@@ -1,7 +1,7 @@
 {
-    "rootdir": "/raid/gkroiz1/SMC21_GM_AV_w_style",
-    "saved_model_loc": "new-all-trans.pt",
-    "checkpoint_loc": "checkpoint.pt",
-    "num_epochs": 100,
-    "batch_size": 5
+    "rootdir": "",
+    "saved_model_loc": "",
+    "checkpoint_loc": "",
+    "num_epochs": ,
+    "batch_size": 
 }

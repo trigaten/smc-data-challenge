@@ -9,8 +9,6 @@ __email__ = "gkroiz1@umbc.edu"
 import matplotlib.pyplot as plt
 import os
 
-
-
 #import utilities
 import utilities
 
@@ -106,7 +104,7 @@ if __name__ == "__main__":
         json_params = loadf(inFile)
     #load json file information
     rootdir = json_params["rootdir"]
-    save_model_loc = json_params["save_model_loc"]
+    save_model_loc = json_params["saved_model_loc"]
     num_epochs = json_params["num_epochs"]
     batch_size = json_params["batch_size"]
 
@@ -131,8 +129,13 @@ if __name__ == "__main__":
     torch.cuda.set_device(rank)
     torch.distributed.init_process_group(backend=Backend.NCCL, init_method='env://')
 
+    #use both transforms for data loader but compress segmentations for loss function
+    traditional_transform = True
+    overlay_transform = True
+    return_rgb = False
+
     #define data loaders
-    trainDataLoader = utilities.create_data_loader(rootdir, rank, worldSize, batch_size)
+    trainDataLoader = utilities.create_data_loader(rootdir, rank, worldSize, batch_size, traditional_transform, overlay_transform, return_rgb, 'train')
 
 
     #define model, optimizer, and loss function
