@@ -83,7 +83,7 @@ rootdir = sys.argv[1]
 #create paths based on rootdir
 save_path = rootdir + "/styled"
 save_path_images = save_path + "/images"
-save_path_segmentations = save_path + "segmentations"
+save_path_segmentations = save_path + "/segmentations"
 
 #create dataset objects and then the data loaders
 SMCCars_city = SMCCarsDataset(rootdir, returnCity=True, returnSynth=False)
