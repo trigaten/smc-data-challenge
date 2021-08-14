@@ -79,7 +79,7 @@ class SMCCarsDataset(Dataset):
         try:
             image = IO.read_image(img_path)
         except Exception:
-            raise Exception("Unable to read image at " + img_path + ". Verify that it is not corrupted.)
+            raise Exception("Unable to read image at " + img_path + ". Verify that it is not corrupted.")
         
         # read seg map
         segmentation = IO.read_image(seg_path)
