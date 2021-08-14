@@ -1,5 +1,5 @@
 {
-    "rootdir": "",
-    "resultsdir": "",
-    "save_model_loc": ""
+    "rootdir": "/raid/gkroiz1/SMC21_GM_AV",
+    "resultsdir": "final-results/traditional-results",
+    "save_model_loc": "traditional-model.pt"
 }

@@ -129,8 +129,13 @@ if __name__ == "__main__":
     torch.cuda.set_device(rank)
     torch.distributed.init_process_group(backend=Backend.NCCL, init_method='env://')
 
+    #use both transforms for data loader but compress segmentations for loss function
+    traditional_transform = True
+    overlay_transform = True
+    return_rgb = False
+
     #define data loaders
-    trainDataLoader = utilities.create_data_loader(rootdir, rank, worldSize, batch_size, 'train')
+    trainDataLoader = utilities.create_data_loader(rootdir, rank, worldSize, batch_size, traditional_transform, overlay_transform, return_rgb, 'train')
 
 
     #define model, optimizer, and loss function

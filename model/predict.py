@@ -68,7 +68,7 @@ def predictions(dataLoader, model, batchSize, resultsdir):
 
             #convert the the dimensions of the predictions to dimensions of an image (RGB)
             tmp = onehot_to_rgb(predictions[index]).type(torch.uint8)
-
+            
             label = labels[index]#.type(torch.uint8)
 
             #save images
@@ -77,23 +77,13 @@ def predictions(dataLoader, model, batchSize, resultsdir):
 
 if __name__ == "__main__":
 
-    with open("main.json", 'r') as inFile:
+    with open("predict.json", 'r') as inFile:
         json_params = loadf(inFile)
+
     #load json file information
     rootdir = json_params["rootdir"]
     save_model_loc = json_params["save_model_loc"]
     resultsdir = json_params["resultsdir"]
-
-    #load data
-    rootdir = '/raid/gkroiz1/SMC21_GM_AV'
-    resultsdir = 'default-results'
-    # resultsdir = 'all-trans-results'
-    # resultsdir = 'paper-results'
-    # rootdir = '/raid/gkroiz1/SMC21_GM_AV_w_style'
-    # save_model_loc = 'tmp.pt'
-
-    save_model_loc = 'default-model.pt'
-    # save_model_loc = 'all-trans-model.pt'
 
     #check for GPUs
     device = torch.device("cuda" if torch.cuda.is_available() else sys.exit('Cuda is required with current version'))
@@ -115,7 +105,12 @@ if __name__ == "__main__":
 
     #set batch size to 1 and load data
     batch_size = 1
-    testDataLoader = utilities.create_data_loader(rootdir, rank, worldSize, batch_size, 'test')
+
+    #do not use both transforms for data loader and return images as rgb
+    traditional_transform = False
+    overlay_transform = False
+    retrun_rgb = True
+    testDataLoader = utilities.create_data_loader(rootdir, rank, worldSize, batch_size, traditional_transform, overlay_transform, retrun_rgb, 'test')
     
     #define model, optimizer, and loss function
     model, opt, loss_func = utilities.create_model(rank)

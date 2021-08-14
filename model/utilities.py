@@ -30,7 +30,7 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 import torch.multiprocessing as mp
 
 
-def create_data_loader(rootdir, rank, world_size, batch_size, dataType = ''):
+def create_data_loader(rootdir, rank, world_size, batch_size, traditional_transform, overlay_transform, return_rgb, dataType = ''):
     """
     Desscription: Creates training and testing data using the SMCCarsDataset class and Pytorch's Dataloader. 
     Args:
@@ -38,11 +38,14 @@ def create_data_loader(rootdir, rank, world_size, batch_size, dataType = ''):
         rank (int): process ID for the GPU
         world_size (int): total number of GPUs
         batch_size (int): size of each batch
+        traditional_transform (bool): whether or not to use traditional transforms
+        overlay_transform (bool): whether or not to use overlay transforms
+        return_rgb (bool): determines whether segmentations should be in rgb form or compressed
         dataType (string): must be either 'train' or 'test' for training and testing data, respectively
     """
 
 
-    SMCCars = SMCCarsDataset.SMCCarsDataset(rootdir, traditional_transform=True, overlay_transform=True)
+    SMCCars = SMCCarsDataset.SMCCarsDataset(rootdir, traditional_transform, overlay_transform, return_rgb)
     
     #set seed for reproducibility
     torch.manual_seed(99)
