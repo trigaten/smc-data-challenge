@@ -8,7 +8,7 @@ Both Step 2 and 3 are located within the ```model``` directory.
 
 ## Step 1: 
 ### Step 1.1: Install conda environment dependencies
-Here is a list of the dependencies for the conda environemnt. At the moment, this code only runs in a GPU environment with CUDA.
+Here is a list of the dependencies for the conda environment. At the moment, this code only runs in a GPU environment with CUDA.
   - torchvision
   - pytorch
   - torchaudio
